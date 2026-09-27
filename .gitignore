@@ -1,0 +1,12 @@
+.local-secrets/
+**/bin/
+**/obj/
+**/.vs/
+**/node_modules/
+**/dist/
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+.env
+*.user
+*.vsidx
