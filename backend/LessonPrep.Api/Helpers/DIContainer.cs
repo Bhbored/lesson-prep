@@ -3,9 +3,11 @@ using Asp.Versioning;
 using LessonPrep.Api.Application.Contracts.Ai;
 using LessonPrep.Api.Application.Contracts.Documents;
 using LessonPrep.Api.Application.Services.Lessons;
+using LessonPrep.Api.Helpers.Documents;
 using LessonPrep.Api.Infrastructure.Ai;
-using LessonPrep.Api.Infrastructure.Documents;
+using LessonPrep.Api.Infrastructure.Ocr;
 using LessonPrep.Api.Infrastructure.Security;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi;
 
@@ -21,6 +23,7 @@ public static class DIContainer
             .RegisterRateLimiting(configuration)
             .RegisterControllers()
             .RegisterSwagger()
+            .RegisterHttpLogging()
             .RegisterHttpClients()
             .RegisterServices();
     }
@@ -103,12 +106,18 @@ public static class DIContainer
     public static IServiceCollection RegisterControllers(this IServiceCollection services)
     {
         services.AddControllers()
-            .AddJsonOptions(options =>
-            {
-                options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-                options.JsonSerializerOptions.Converters.Add(
-                    new System.Text.Json.Serialization.JsonStringEnumConverter());
-            });
+            .AddJsonOptions(options => JsonDefaults.Configure(options.JsonSerializerOptions));
+        return services;
+    }
+
+    public static IServiceCollection RegisterHttpLogging(this IServiceCollection services)
+    {
+        services.AddHttpLogging(options =>
+        {
+            options.LoggingFields = HttpLoggingFields.RequestPropertiesAndHeaders
+                | HttpLoggingFields.ResponsePropertiesAndHeaders;
+            options.RequestHeaders.Remove("X-Provider-Token");
+        });
         return services;
     }
 
@@ -131,7 +140,7 @@ public static class DIContainer
 
     public static IServiceCollection RegisterServices(this IServiceCollection services)
     {
-        services.AddSingleton<CredentialCipher>();
+        services.AddSingleton<CredentialTokenService>();
         services.AddScoped<IOcrService, PaddleOcrClient>();
         services.AddScoped<DocumentProcessor>();
         services.AddScoped<GenerationService>();

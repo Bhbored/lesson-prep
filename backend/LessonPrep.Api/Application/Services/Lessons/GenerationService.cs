@@ -1,28 +1,24 @@
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using LessonPrep.Api.Application.Contracts.Ai;
 using LessonPrep.Api.Application.Contracts.Lessons;
 using LessonPrep.Api.Application.Dtos;
 using LessonPrep.Api.Application.Enums;
 using LessonPrep.Api.Application.Exceptions;
 using LessonPrep.Api.Application.Validators;
-using LessonPrep.Api.Infrastructure.Documents;
+using LessonPrep.Api.Helpers;
+using LessonPrep.Api.Helpers.Documents;
 using LessonPrep.Api.Infrastructure.Security;
 
 namespace LessonPrep.Api.Application.Services.Lessons;
 
 public sealed class GenerationService(
     DocumentProcessor documents,
-    CredentialCipher cipher,
+    CredentialTokenService tokens,
     IEnumerable<IAiProvider> providers,
     ILogger<GenerationService> logger)
 {
     private readonly IReadOnlyDictionary<AiProvider, IAiProvider> _providers = providers.ToDictionary(x => x.Provider);
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
-    {
-        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-    };
 
     public static IReadOnlyList<PhaseSpec> ResolvePhases(string? presetId, string? customPhases)
     {
@@ -37,12 +33,48 @@ public sealed class GenerationService(
 
         try
         {
-            return JsonSerializer.Deserialize<List<PhaseSpec>>(customPhases!, JsonOptions) ?? [];
+            return JsonSerializer.Deserialize<List<PhaseSpec>>(customPhases!, JsonDefaults.Web) ?? [];
         }
         catch (JsonException)
         {
             throw new LessonValidationException("Custom lesson phases are invalid.");
         }
+    }
+
+    public async Task GenerateFromFormAsync(HttpRequest request, HttpResponse response, CancellationToken ct)
+    {
+        var form = await ParseGenerateFormAsync(request, ct);
+        await Sse.WriteAsync(response, "status", new { stage = "extracting" }, ct);
+        var preparation = await CreateAsync(
+            form.Files, form.ClassName, form.DurationMinutes, form.SourceLanguage, form.Phases, form.VariantCount, ct);
+        await Sse.WriteAsync(response, "preparation", preparation, ct);
+        await GenerateAsync(
+            preparation, form.VariantCount, 1, form.Provider, form.Model, form.CredentialToken, response, ct);
+    }
+
+    private static async Task<GenerateRequest> ParseGenerateFormAsync(HttpRequest request, CancellationToken ct)
+    {
+        if (!request.HasFormContentType)
+            throw new LessonValidationException("Upload files with multipart form data.");
+        var form = await request.ReadFormAsync(ct);
+
+        string Required(string name) => form[name].ToString() is { Length: > 0 } value
+            ? value
+            : throw new LessonValidationException($"Missing {name}.");
+
+        var className = Required("className");
+        if (!int.TryParse(Required("totalDurationMinutes"), out var duration)
+            || !int.TryParse(Required("variantCount"), out var count))
+            throw new LessonValidationException("Duration and variant count must be numbers.");
+        var phases = ResolvePhases(form["lessonFlowPresetId"], form["customPhases"]);
+        LessonValidator.ValidateFlow(className, duration, phases, count);
+        var credentialToken = Required("credentialToken");
+        if (!Enum.TryParse<AiProvider>(Required("provider"), true, out var provider) || !Enum.IsDefined(provider))
+            throw new LessonValidationException("Unknown AI provider.");
+
+        return new GenerateRequest(
+            className, duration, count, Required("sourceLanguage"), phases, provider, Required("model"),
+            credentialToken, [.. form.Files]);
     }
 
     public async Task<PreparationSnapshot> CreateAsync(IReadOnlyList<IFormFile> files, string className, int duration,
@@ -75,14 +107,14 @@ public sealed class GenerationService(
     }
 
     public async Task GenerateAsync(PreparationSnapshot snapshot, int count, int round, AiProvider providerId, string model,
-        EncryptedCredential credential, HttpResponse response, CancellationToken ct)
+        string credentialToken, HttpResponse response, CancellationToken ct)
     {
         ValidateSnapshot(snapshot, count, round);
         if (!_providers.TryGetValue(providerId, out var provider))
             throw new LessonValidationException("Unknown AI provider.");
         if (string.IsNullOrWhiteSpace(model) || model.Length > 150)
             throw new LessonValidationException("Choose an AI model.");
-        var apiKey = cipher.Decrypt(credential);
+        var apiKey = tokens.Open(credentialToken, providerId);
         var models = await provider.ListModelsAsync(apiKey, ct);
         if (!models.Any(x => x.Id == model))
             throw new LessonValidationException("The selected model is no longer available. Refresh your model list.");

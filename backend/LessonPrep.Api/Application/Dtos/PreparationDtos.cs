@@ -18,4 +18,4 @@ public sealed record RegenerateRequest(
     [Range(1, 10_000)] int GenerationRound,
     [Required, EnumDataType(typeof(AiProvider))] AiProvider Provider,
     [Required, StringLength(150, MinimumLength = 1)] string Model,
-    [Required] EncryptedCredential EncryptedCredential);
+    [Required, MinLength(1)] string CredentialToken);

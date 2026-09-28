@@ -1,11 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using LessonPrep.Api.Application.Enums;
 
 namespace LessonPrep.Api.Application.Dtos;
 
-public sealed record EncryptedCredential(
-    [Required, StringLength(16, MinimumLength = 16)] string KeyId,
-    [Required, MinLength(1)] string WrappedKey,
-    [Required, MinLength(1)] string Nonce,
-    [Required, MinLength(1)] string Ciphertext);
+public sealed record IssueCredentialRequest(
+    [Required, EnumDataType(typeof(AiProvider))] AiProvider Provider,
+    [Required, StringLength(4096, MinimumLength = 1)] string ApiKey);
 
-public sealed record PublicKeyDto(string KeyId, string Spki);
+public sealed record CredentialTokenDto(string Token);

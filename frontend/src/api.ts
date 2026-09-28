@@ -1,8 +1,7 @@
-export type ProviderId = 'openai' | 'gemini' | 'anthropic' | 'deepseek'
+export type ProviderId = 'openAi' | 'gemini' | 'anthropic' | 'deepSeek'
 export type Language = 'en' | 'ar' | 'fr'
 export type Phase = { name: string; durationMinutes: number; order: number }
 export type Preset = { id: string; name: string; description: string; isDefault: boolean; phases: Phase[] }
-export type EncryptedCredential = { keyId: string; wrappedKey: string; nonce: string; ciphertext: string }
 export type AiModel = { id: string; name: string }
 export type LessonPhase = Phase & {
   objective: string; teacherActions: string[]; studentActions: string[]; questions: string[]; notes: string
@@ -14,16 +13,52 @@ export type Lesson = {
 }
 export type Variant = { id: string; variantNumber: number; generationRound: number; provider: string; model: string; lesson: Lesson }
 export type Preparation = { preparationId: string; className: string; totalDurationMinutes: number; sourceLanguage: Language; phases: Phase[]; sourceText: string; preparedSourceText: string; variants: Variant[] }
-export type Settings = { displayLanguage: Language; provider: ProviderId; keys: Partial<Record<ProviderId, EncryptedCredential>>; models: Partial<Record<ProviderId, string>> }
+export type Settings = { displayLanguage: Language; provider: ProviderId; keys: Partial<Record<ProviderId, string>>; models: Partial<Record<ProviderId, string>> }
 
-export const providerNames: Record<ProviderId, string> = { openai: 'OpenAI', gemini: 'Gemini', anthropic: 'Anthropic', deepseek: 'DeepSeek' }
-export const providerIds: ProviderId[] = ['openai', 'gemini', 'anthropic', 'deepseek']
+export const providerNames: Record<ProviderId, string> = { openAi: 'OpenAI', gemini: 'Gemini', anthropic: 'Anthropic', deepSeek: 'DeepSeek' }
+export const providerIds: ProviderId[] = ['openAi', 'gemini', 'anthropic', 'deepSeek']
+
+const legacyProviders: Record<string, ProviderId> = {
+  openai: 'openAi', openAi: 'openAi',
+  gemini: 'gemini',
+  anthropic: 'anthropic',
+  deepseek: 'deepSeek', deepSeek: 'deepSeek',
+}
+
+function migrateProvider(value: unknown): ProviderId {
+  return typeof value === 'string' && value in legacyProviders ? legacyProviders[value] : 'deepSeek'
+}
+
+function migrateKeys(raw: unknown): Partial<Record<ProviderId, string>> {
+  if (!raw || typeof raw !== 'object') return {}
+  const keys: Partial<Record<ProviderId, string>> = {}
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    const provider = migrateProvider(key)
+    if (typeof value === 'string' && value.includes('.')) keys[provider] = value
+  }
+  return keys
+}
+
+function migrateModels(raw: unknown): Partial<Record<ProviderId, string>> {
+  if (!raw || typeof raw !== 'object') return {}
+  const models: Partial<Record<ProviderId, string>> = {}
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    const provider = migrateProvider(key)
+    if (typeof value === 'string') models[provider] = value
+  }
+  return models
+}
 
 export function loadSettings(): Settings {
   try {
     const value = JSON.parse(localStorage.getItem('lessonprep.settings') || '{}')
-    return { displayLanguage: value.displayLanguage === 'ar' ? 'ar' : 'en', provider: providerIds.includes(value.provider) ? value.provider : 'deepseek', keys: value.keys || {}, models: value.models || {} }
-  } catch { return { displayLanguage: 'en', provider: 'deepseek', keys: {}, models: {} } }
+    return {
+      displayLanguage: value.displayLanguage === 'ar' ? 'ar' : 'en',
+      provider: migrateProvider(value.provider),
+      keys: migrateKeys(value.keys),
+      models: migrateModels(value.models),
+    }
+  } catch { return { displayLanguage: 'en', provider: 'deepSeek', keys: {}, models: {} } }
 }
 export function saveSettings(value: Settings) { localStorage.setItem('lessonprep.settings', JSON.stringify(value)) }
 export function loadLocalPresets(): Preset[] {
@@ -45,39 +80,29 @@ async function errorMessage(response: Response): Promise<string> {
   catch { return `Request failed (${response.status})` }
 }
 
+const apiRoot = '/lessonprep/v1.0'
+
 export async function getPresets(): Promise<Preset[]> {
-  const response = await fetch('/api/lesson-flow-presets')
+  const response = await fetch(`${apiRoot}/LessonFlowPresets`)
   if (!response.ok) throw new Error(await errorMessage(response))
   return response.json()
 }
 
-function bytesToBase64(bytes: Uint8Array): string {
-  let binary = ''
-  for (const byte of bytes) binary += String.fromCharCode(byte)
-  return btoa(binary)
-}
-function base64ToBytes(value: string): Uint8Array<ArrayBuffer> {
-  const binary = atob(value)
-  return Uint8Array.from(binary, character => character.charCodeAt(0))
-}
-
-export async function encryptKey(secret: string): Promise<EncryptedCredential> {
-  const response = await fetch('/api/ai/public-key')
+export async function issueCredential(provider: ProviderId, apiKey: string): Promise<string> {
+  const response = await fetch(`${apiRoot}/Ai/credentials`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ provider, apiKey }),
+  })
   if (!response.ok) throw new Error(await errorMessage(response))
-  const { keyId, spki } = await response.json() as { keyId: string; spki: string }
-  const rsa = await crypto.subtle.importKey('spki', base64ToBytes(spki), { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt'])
-  const aes = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt'])
-  const raw = new Uint8Array(await crypto.subtle.exportKey('raw', aes))
-  const wrapped = new Uint8Array(await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, rsa, raw))
-  const nonce = crypto.getRandomValues(new Uint8Array(12))
-  const cipher = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, aes, new TextEncoder().encode(secret)))
-  raw.fill(0)
-  return { keyId, wrappedKey: bytesToBase64(wrapped), nonce: bytesToBase64(nonce), ciphertext: bytesToBase64(cipher) }
+  const data = await response.json() as { token: string }
+  return data.token
 }
 
-export async function getModels(provider: ProviderId, credential: EncryptedCredential): Promise<AiModel[]> {
-  const response = await fetch(`/api/ai/providers/${provider}/models`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credential)
+export async function getModels(provider: ProviderId, token: string): Promise<AiModel[]> {
+  const response = await fetch(`${apiRoot}/Ai/providers/${provider}/models`, {
+    method: 'POST',
+    headers: { 'X-Provider-Token': token },
   })
   if (!response.ok) throw new Error(await errorMessage(response))
   return response.json()

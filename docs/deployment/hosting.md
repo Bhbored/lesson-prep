@@ -13,12 +13,12 @@ There is **no PostgreSQL service or database migration**. The standard preset is
 ## Network layout
 
 ```text
-Browser --HTTPS--> React static site / reverse proxy --/api--> ASP.NET API
+Browser --HTTPS--> React static site / reverse proxy --/lessonprep--> ASP.NET API
                                                        |--> FastAPI OCR (private)
                                                        `--> AI provider APIs (outbound HTTPS)
 ```
 
-Expose the frontend and ASP.NET API through HTTPS. Keep OCR private and reachable only from ASP.NET. The frontend uses relative `/api/...` URLs. A simple deployment serves `frontend/dist/` and reverse-proxies `/api/*` to ASP.NET under one HTTPS hostname. If using separate hostnames, route browser `/api` traffic to the API and configure allowed frontend origins.
+Expose the frontend and ASP.NET API through HTTPS. Keep OCR private and reachable only from ASP.NET. The frontend uses relative `/lessonprep/v1.0/...` URLs. A simple deployment serves `frontend/dist/` and reverse-proxies `/lessonprep/*` to ASP.NET under one HTTPS hostname. If using separate hostnames, route browser `/lessonprep` traffic to the API and configure allowed frontend origins.
 
 The app streams SSE through a POST `fetch` request. Configure your proxy/load balancer to allow long-lived incremental HTTP responses and disable buffering for the streaming routes. ASP.NET sets `X-Accel-Buffering: no`, but the proxy must honor its own settings. The AI HTTP client timeout is five minutes.
 
@@ -26,13 +26,13 @@ The app streams SSE through a POST `fetch` request. Configure your proxy/load ba
 
 | Setting | Value |
 | --- | --- |
-| `Crypto__PrivateKeyPath` | Path to a mounted persistent RSA private-key PEM file |
+| `Crypto__TokenSecret` | Base64-encoded 32-byte secret for issuing/opening credential tokens |
 | `OcrService__BaseUrl` | Internal URL of FastAPI, for example `http://ocr-service:8001` |
 | `Frontend__Origins__0` | Browser frontend origin, for example `https://lessons.example.com`; use `__1`, `__2` for more |
 | `ASPNETCORE_URLS` | Bind address/port required by the host, often `http://0.0.0.0:8080` behind TLS termination |
 | `ASPNETCORE_ENVIRONMENT` | `Production` for production hosting |
 
-The private-key path default in `appsettings.json` is for this repository's local development layout. Mount a stable production secret and point the API to it. Rotating it makes existing browser-encrypted provider keys unusable until each teacher enters a key again.
+Mount a stable production token secret via environment variable or secret manager. Rotating it makes existing browser-stored credential tokens unusable until each teacher enters a key again.
 
 ## OCR service
 

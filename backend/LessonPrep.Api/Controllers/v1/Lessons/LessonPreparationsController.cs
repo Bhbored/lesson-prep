@@ -1,10 +1,5 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using LessonPrep.Api.Application.Dtos;
-using LessonPrep.Api.Application.Enums;
-using LessonPrep.Api.Application.Exceptions;
 using LessonPrep.Api.Application.Services.Lessons;
-using LessonPrep.Api.Application.Validators;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -12,52 +7,21 @@ namespace LessonPrep.Api.Controllers.v1.Lessons;
 
 public sealed class LessonPreparationsController(GenerationService service) : BaseController
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
-    {
-        Converters = { new JsonStringEnumConverter() }
-    };
-
     [HttpPost("generate")]
     [EnableRateLimiting("generation")]
-    public async Task Generate(CancellationToken cancellationToken)
-    {
-        if (!Request.HasFormContentType) throw new LessonValidationException("Upload files with multipart form data.");
-        var form = await Request.ReadFormAsync(cancellationToken);
-
-        string Required(string name) => form[name].ToString() is { Length: > 0 } value
-            ? value
-            : throw new LessonValidationException($"Missing {name}.");
-
-        var className = Required("className");
-        if (!int.TryParse(Required("totalDurationMinutes"), out var duration)
-            || !int.TryParse(Required("variantCount"), out var count))
-            throw new LessonValidationException("Duration and variant count must be numbers.");
-        var phases = GenerationService.ResolvePhases(form["lessonFlowPresetId"], form["customPhases"]);
-        LessonValidator.ValidateFlow(className, duration, phases, count);
-        var credential = JsonSerializer.Deserialize<EncryptedCredential>(Required("encryptedCredential"), JsonOptions)
-                         ?? throw new CredentialException("Enter an API key in Settings.");
-        if (!Enum.TryParse<AiProvider>(Required("provider"), true, out var provider) || !Enum.IsDefined(provider))
-            throw new LessonValidationException("Unknown AI provider.");
-        await Sse.WriteAsync(Response, "status", new { stage = "extracting" }, cancellationToken);
-        var preparation = await service.CreateAsync(
-            [.. form.Files], className, duration, Required("sourceLanguage"), phases, count, cancellationToken);
-        await Sse.WriteAsync(Response, "preparation", preparation, cancellationToken);
-        await service.GenerateAsync(
-            preparation, count, 1, provider, Required("model"), credential, Response, cancellationToken);
-    }
+    public Task Generate(CancellationToken cancellationToken) =>
+        service.GenerateFromFormAsync(Request, Response, cancellationToken);
 
     [HttpPost("regenerate")]
     [EnableRateLimiting("generation")]
-    public async Task Regenerate([FromBody] RegenerateRequest request, CancellationToken cancellationToken)
-    {
-        await service.GenerateAsync(
+    public Task Regenerate([FromBody] RegenerateRequest request, CancellationToken cancellationToken) =>
+        service.GenerateAsync(
             request.Snapshot,
             request.VariantCount,
             request.GenerationRound,
             request.Provider,
             request.Model,
-            request.EncryptedCredential,
+            request.CredentialToken,
             Response,
             cancellationToken);
-    }
 }

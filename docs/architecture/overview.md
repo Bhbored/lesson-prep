@@ -12,11 +12,11 @@ The Python OCR service is a narrow image-to-text service. ASP.NET handles everyt
 
 ## Generation request
 
-1. The browser encrypts a provider key with the public RSA key from `GET /api/ai/public-key`. Only the encrypted envelope is stored locally.
-2. The teacher uploads PDF/TXT/CSV material to `POST /api/lesson-preparations/generate` with class, duration, phase selection, provider, model, and encrypted credential.
+1. The browser posts the provider API key once to `POST /lessonprep/v1.0/Ai/credentials` over HTTPS. The API returns a JWE credential token that is stored locally.
+2. The teacher uploads PDF/TXT/CSV material to `POST /lessonprep/v1.0/LessonPreparations/generate` with class, duration, phase selection, provider, model, and credential token.
 3. ASP.NET parses TXT/CSV directly. For each PDF page, it reads embedded text or renders and sends weak-text pages to the private OCR service.
 4. ASP.NET normalizes and bounds the source, validates the phase timings, and emits a `preparation` SSE event containing source text and an ordered phase snapshot. React stores this latest snapshot in browser local storage.
-5. ASP.NET decrypts the selected credential in memory and calls the chosen AI provider. Adapters translate one lesson prompt and schema into provider-specific requests and streaming responses.
+5. ASP.NET decrypts the credential token in memory and calls the chosen AI provider. Adapters translate one lesson prompt and schema into provider-specific requests and streaming responses.
 6. The API emits status, provisional text deltas, validated alternatives, and completion events. React stores only completed alternatives and displays provisional text separately.
 7. Regeneration sends the browser's saved source/phase snapshot back to ASP.NET with the provider/model currently selected in Settings. Nothing needs to be looked up on the server.
 

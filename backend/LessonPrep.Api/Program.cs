@@ -14,6 +14,13 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 
 builder.Services.RegisterDependencies(builder.Configuration);
 
+builder.Services.AddHsts(options =>
+{
+    options.MaxAge = TimeSpan.FromDays(365);
+    options.IncludeSubDomains = true;
+    options.Preload = true;
+});
+
 var app = builder.Build();
 
 app.UseMiddleware<CorrelationIdMiddleware>();
@@ -21,8 +28,15 @@ app.UseMiddleware<HandleExceptionMiddleware>();
 app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
+{
     app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseHsts();
+}
 
+app.UseHttpsRedirection();
 app.UseCors();
 app.UseRateLimiter();
 app.UseSwagger();
@@ -30,11 +44,12 @@ app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "1.0");
 });
+app.UseHttpLogging();
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapGet("/health/live", () => Results.Ok(new { status = "ok" }));
 
-_ = app.Services.GetRequiredService<CredentialCipher>();
+_ = app.Services.GetRequiredService<CredentialTokenService>();
 app.Run();
 
 public partial class Program;

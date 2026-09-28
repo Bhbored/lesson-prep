@@ -13,26 +13,35 @@ No PostgreSQL installation, schema, migration, or connection string is needed.
 
 ## Start order
 
-Create a persistent development RSA private key first using `./scripts/create-dev-key.ps1`. Then start these processes in separate terminals:
+Start these processes in separate terminals:
 
 1. OCR service from `ocr-service/`, listening on `127.0.0.1:8001`.
-2. ASP.NET API from `backend/LessonPrep.Api/`, listening on `localhost:5132` under the HTTP launch profile.
+2. ASP.NET API from `backend/LessonPrep.Api/`, listening on `localhost:5132` under the HTTP launch profile. Development loads `Crypto:TokenSecret` from `appsettings.Development.json`.
 3. React from `frontend/`, using Vite on `localhost:5173`.
 
-The Vite development proxy forwards `/api` to ASP.NET. Production hosting needs its own reverse proxy or same-origin routing.
+The Vite development proxy forwards `/lessonprep` to ASP.NET. Production hosting needs its own reverse proxy or same-origin routing.
 
 ## Optional local overrides
 
-The API defaults in `backend/LessonPrep.Api/appsettings.json` point to the development key and OCR service. Override them in a shell if needed:
+Override configuration in a shell if needed:
 
 ```powershell
-$env:Crypto__PrivateKeyPath='C:\path\to\lessonprep-private.pem'
+$env:Crypto__TokenSecret='<base64-32-byte-secret>'
 $env:OcrService__BaseUrl='http://localhost:8001'
 $env:Frontend__Origins__0='http://localhost:5173'
 dotnet run
 ```
 
-Do not put a production private key in checked-in JSON.
+Generate a secret with `openssl rand -base64 32` or PowerShell:
+
+```powershell
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+$bytes = New-Object byte[] 32
+$rng.GetBytes($bytes)
+[Convert]::ToBase64String($bytes)
+```
+
+Do not put a production token secret in checked-in JSON. Prefer `dotnet user-secrets` or environment variables for shared machines.
 
 ## Useful commands
 
@@ -46,4 +55,4 @@ The API smoke test requires only a running API. Set `$env:CHECK_PDF='1'` and sta
 
 ## Browser state while developing
 
-Custom presets, encrypted keys, and the latest source/lesson snapshot live in browser local storage. Clearing site data resets them. Editing a custom preset after a preparation does not change the preparation's saved phase snapshot. The API restarts without losing the browser's preparation, because regeneration sends that snapshot back in the request.
+Custom presets, credential tokens, and the latest source/lesson snapshot live in browser local storage. Clearing site data resets them. Editing a custom preset after a preparation does not change the preparation's saved phase snapshot. The API restarts without losing the browser's preparation, because regeneration sends that snapshot back in the request. Rotating `Crypto:TokenSecret` invalidates stored tokens until keys are entered again.

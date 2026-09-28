@@ -1,4 +1,3 @@
-.local-secrets/
 **/bin/
 **/obj/
 **/.vs/
@@ -8,5 +7,6 @@
 **/__pycache__/
 **/.pytest_cache/
 .env
+**/appsettings.Development.json
 *.user
 *.vsidx

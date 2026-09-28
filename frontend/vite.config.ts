@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': { target: 'http://localhost:5132', changeOrigin: true },
+      '/lessonprep': { target: 'http://localhost:5132', changeOrigin: true },
     },
   },
 })

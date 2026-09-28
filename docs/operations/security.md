@@ -2,15 +2,15 @@
 
 ## Provider-key flow
 
-1. The browser requests the API's public RSA key at `GET /api/ai/public-key`.
-2. Web Crypto creates a random AES-GCM data key, encrypts the provider API key, and wraps the AES key with RSA-OAEP/SHA-256.
-3. Only the envelope (`keyId`, wrapped key, nonce, ciphertext) is kept in browser local storage and sent in model-list or generation requests.
-4. ASP.NET uses the mounted RSA private key to unwrap/decrypt the credential in memory. It passes the value to the provider request and does not store it on the server or in application logs.
-5. The public key ID is derived from the public key. Replacing the private key changes that ID, and envelopes encrypted for the previous key are rejected; the user must enter keys again.
+1. Over HTTPS, the browser posts the provider and plaintext API key once to `POST /lessonprep/v1.0/Ai/credentials`.
+2. The API encrypts the key into a compact JWE token (`alg: dir`, `enc: A256GCM`) using `Crypto:TokenSecret` (a 32-byte secret). The payload binds the provider so a DeepSeek token cannot be reused as OpenAI.
+3. Only the token string is kept in browser local storage and sent back on model-list (`X-Provider-Token` header) or generation (`credentialToken`) requests.
+4. ASP.NET decrypts the token in memory, passes the key to the provider request, and does not store credentials on the server or in application logs.
+5. The token header includes a `kid` fingerprint of the secret. Rotating `Crypto:TokenSecret` changes that ID; old tokens are rejected and users must enter keys again.
 
-The backend must keep the same private key across restarts and replicas. Mount it from a secret manager or protected file, limit read access to the API process, and back it up securely. Losing or rotating it invalidates every browser's saved encrypted provider key. Never commit the private key or configure it as a public frontend variable.
+The backend keeps no per-user credential store. Keep the same token secret across restarts and replicas (env var or secret manager). Never commit a production secret or expose it to the frontend.
 
-Encryption in browser storage protects the key at rest from casual inspection, but the browser must send it to the API to use it. It cannot protect against malicious JavaScript served by the same origin, browser extensions, or a compromised server. Serve the frontend/API only over HTTPS outside local development.
+The token protects the key at rest in local storage from casual inspection, but the browser must send it to the API to use it. It cannot protect against malicious JavaScript on the same origin, browser extensions, or a compromised server. Serve the frontend/API only over HTTPS outside local development. Do not log request bodies for the credentials endpoint or the `X-Provider-Token` header.
 
 ## Current public-exposure risks
 

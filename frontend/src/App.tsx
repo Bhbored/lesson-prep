@@ -24,7 +24,7 @@ import anthropicLogo from "@lobehub/icons-static-svg/icons/anthropic.svg";
 import deepseekLogo from "@lobehub/icons-static-svg/icons/deepseek-color.svg";
 import {
   consumeSse,
-  encryptKey,
+  issueCredential,
   getModels,
   getPresets,
   loadLocalPresets,
@@ -51,10 +51,10 @@ import "./App.css";
 
 type Tab = "prepare" | "presets" | "settings" | "results";
 const logos: Record<ProviderId, string> = {
-  openai: openaiLogo,
+  openAi: openaiLogo,
   gemini: geminiLogo,
   anthropic: anthropicLogo,
-  deepseek: deepseekLogo,
+  deepSeek: deepseekLogo,
 };
 const blankPreset = (): Preset => ({
   id: crypto.randomUUID(),
@@ -220,10 +220,10 @@ function App() {
     setError("");
     setNotice("");
     try {
-      const encrypted = await encryptKey(keyInput.trim());
+      const token = await issueCredential(settings.provider, keyInput.trim());
       updateSettings({
         ...settings,
-        keys: { ...settings.keys, [settings.provider]: encrypted },
+        keys: { ...settings.keys, [settings.provider]: token },
         models: { ...settings.models, [settings.provider]: "" },
       });
       setKeyInput("");
@@ -368,7 +368,7 @@ function App() {
     form.append("variantCount", String(variantCount));
     form.append("provider", settings.provider);
     form.append("model", model);
-    form.append("encryptedCredential", JSON.stringify(credential));
+    form.append("credentialToken", credential);
     if (selectedPreset.isDefault)
       form.append("lessonFlowPresetId", selectedPreset.id);
     else form.append("customPhases", JSON.stringify(selectedPreset.phases));
@@ -382,7 +382,7 @@ function App() {
     setTab("results");
     try {
       await consumeSse(
-        await fetch("/api/lesson-preparations/generate", {
+        await fetch("/lessonprep/v1.0/LessonPreparations/generate", {
           method: "POST",
           body: form,
           signal: controller.signal,
@@ -414,7 +414,7 @@ function App() {
     setStage("generating");
     setLiveDraft("");
     try {
-      const response = await fetch("/api/lesson-preparations/regenerate", {
+      const response = await fetch("/lessonprep/v1.0/LessonPreparations/regenerate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
@@ -423,7 +423,7 @@ function App() {
           generationRound: latestRound + 1,
           provider: settings.provider,
           model,
-          encryptedCredential: credential,
+          credentialToken: credential,
           snapshot: {
             preparationId: preparation.preparationId,
             className: preparation.className,

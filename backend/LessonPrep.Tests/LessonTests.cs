@@ -6,16 +6,15 @@ using LessonPrep.Api.Application.Contracts.Ai;
 using LessonPrep.Api.Application.Contracts.Documents;
 using LessonPrep.Api.Application.Contracts.Lessons;
 using LessonPrep.Api.Application.Dtos;
+using LessonPrep.Api.Application.Enums;
 using LessonPrep.Api.Application.Exceptions;
 using LessonPrep.Api.Application.Services.Lessons;
 using LessonPrep.Api.Application.Validators;
+using LessonPrep.Api.Helpers.Documents;
 using LessonPrep.Api.Infrastructure.Ai;
-using LessonPrep.Api.Infrastructure.Documents;
 using LessonPrep.Api.Infrastructure.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace LessonPrep.Tests;
@@ -69,7 +68,7 @@ public sealed class LessonTests
     [Fact]
     public void CsvParserPreservesQuotedCommasAndNewlines()
     {
-        var text = DocumentProcessor.CsvToText("Topic,Example\nPlants,\"sunlight, water\n and air\"\n");
+        var text = CsvToText.Convert("Topic,Example\nPlants,\"sunlight, water\n and air\"\n");
         Assert.Contains("Topic: Plants", text);
         Assert.Contains("Example: sunlight, water\n and air", text);
     }
@@ -121,33 +120,25 @@ public sealed class LessonTests
     }
 
     [Fact]
-    public void CredentialEnvelopeDecryptsAndRotationRejectsOldKey()
+    public void CredentialTokenRoundTripsAndRejectsTamperingRotationAndProviderMismatch()
     {
-        var directory = Path.Combine(Path.GetTempPath(), "lessonprep-test-" + Guid.NewGuid());
-        Directory.CreateDirectory(directory);
-        try
-        {
-            var path = Path.Combine(directory, "private.pem");
-            using var rsa = RSA.Create(3072);
-            File.WriteAllText(path, rsa.ExportPkcs8PrivateKeyPem());
-            var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["Crypto:PrivateKeyPath"] = path }).Build();
-            using var cipher = new CredentialCipher(configuration, new TestEnvironment(directory));
-            using var aes = Aes.Create();
-            aes.KeySize = 256;
-            var nonce = RandomNumberGenerator.GetBytes(12);
-            var plain = Encoding.UTF8.GetBytes("test-api-key");
-            var encrypted = new byte[plain.Length];
-            var tag = new byte[16];
-            using (var gcm = new AesGcm(aes.Key, 16)) gcm.Encrypt(nonce, plain, encrypted, tag);
-            var publicRsa = RSA.Create();
-            publicRsa.ImportSubjectPublicKeyInfo(Convert.FromBase64String(cipher.PublicKey.Spki), out _);
-            var envelope = new EncryptedCredential(cipher.PublicKey.KeyId,
-                Convert.ToBase64String(publicRsa.Encrypt(aes.Key, RSAEncryptionPadding.OaepSHA256)),
-                Convert.ToBase64String(nonce), Convert.ToBase64String([.. encrypted, .. tag]));
-            Assert.Equal("test-api-key", cipher.Decrypt(envelope));
-            Assert.Throws<CredentialException>(() => cipher.Decrypt(envelope with { KeyId = "rotated-key" }));
-        }
-        finally { File.Delete(Path.Combine(directory, "private.pem")); Directory.Delete(directory); }
+        var secret = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        var otherSecret = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        var tokens = new CredentialTokenService(new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Crypto:TokenSecret"] = secret }).Build());
+        var rotated = new CredentialTokenService(new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Crypto:TokenSecret"] = otherSecret }).Build());
+
+        var token = tokens.Issue(AiProvider.DeepSeek, "test-api-key");
+        Assert.Equal("test-api-key", tokens.Open(token, AiProvider.DeepSeek));
+        Assert.Throws<CredentialException>(() => tokens.Open(token, AiProvider.OpenAi));
+        Assert.Throws<CredentialException>(() => rotated.Open(token, AiProvider.DeepSeek));
+
+        var parts = token.Split('.');
+        var cipher = parts[3].ToCharArray();
+        cipher[^1] = cipher[^1] == 'A' ? 'B' : 'A';
+        parts[3] = new string(cipher);
+        Assert.Throws<CredentialException>(() => tokens.Open(string.Join('.', parts), AiProvider.DeepSeek));
     }
 
     [Fact]
@@ -228,13 +219,5 @@ public sealed class LessonTests
             Assert.Equal("en", language);
             return Task.FromResult("OCR scanned page about water");
         }
-    }
-
-    private sealed class TestEnvironment(string root) : IHostEnvironment
-    {
-        public string EnvironmentName { get; set; } = "Development";
-        public string ApplicationName { get; set; } = "Tests";
-        public string ContentRootPath { get; set; } = root;
-        public IFileProvider ContentRootFileProvider { get; set; } = new PhysicalFileProvider(root);
     }
 }
