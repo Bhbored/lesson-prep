@@ -1,11 +1,11 @@
 using System.Text.Json;
-using LessonPrep.Api.Application.Contracts;
-using LessonPrep.Api.Application.Services;
-using LessonPrep.Api.Infrastructure.Security;
+using LessonPrep.Api.Application.Dtos;
+using LessonPrep.Api.Application.Exceptions;
+using LessonPrep.Api.Application.Services.Lessons;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
-namespace LessonPrep.Api.Controllers.v1;
+namespace LessonPrep.Api.Controllers.v1.Lessons;
 
 public sealed class LessonPreparationsController(GenerationService service) : LessonPrepControllerBase
 {
@@ -51,11 +51,3 @@ public sealed class LessonPreparationsController(GenerationService service) : Le
             cancellationToken);
     }
 }
-
-public sealed record RegenerateRequest(
-    PreparationSnapshot Snapshot,
-    int VariantCount,
-    int GenerationRound,
-    string Provider,
-    string Model,
-    EncryptedCredential EncryptedCredential);

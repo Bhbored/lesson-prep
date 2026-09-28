@@ -13,7 +13,6 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 });
 
 builder.Services.RegisterDependencies(builder.Configuration);
-builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 110 * 1024 * 1024);
 
 var app = builder.Build();
 

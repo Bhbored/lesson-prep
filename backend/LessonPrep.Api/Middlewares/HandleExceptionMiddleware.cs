@@ -1,9 +1,7 @@
 using System.Text.Json;
-using LessonPrep.Api.Application.Contracts;
-using LessonPrep.Api.Application.Services;
-using LessonPrep.Api.Infrastructure.Ai;
-using LessonPrep.Api.Infrastructure.Documents;
-using LessonPrep.Api.Infrastructure.Security;
+using LessonPrep.Api.Application.Dtos;
+using LessonPrep.Api.Application.Exceptions;
+using LessonPrep.Api.Application.Services.Lessons;
 
 namespace LessonPrep.Api.Middlewares;
 

@@ -1,9 +1,8 @@
 using System.Security.Cryptography;
+using LessonPrep.Api.Application.Dtos;
+using LessonPrep.Api.Application.Exceptions;
 
 namespace LessonPrep.Api.Infrastructure.Security;
-
-public sealed record EncryptedCredential(string KeyId, string WrappedKey, string Nonce, string Ciphertext);
-public sealed record PublicKeyDto(string KeyId, string Spki);
 
 public sealed class CredentialCipher : IDisposable
 {
@@ -54,5 +53,3 @@ public sealed class CredentialCipher : IDisposable
 
     public void Dispose() => _rsa.Dispose();
 }
-
-public sealed class CredentialException(string message) : Exception(message);

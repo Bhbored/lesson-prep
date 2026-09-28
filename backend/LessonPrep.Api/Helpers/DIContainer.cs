@@ -1,6 +1,8 @@
 using System.Threading.RateLimiting;
 using Asp.Versioning;
-using LessonPrep.Api.Application.Services;
+using LessonPrep.Api.Application.Contracts.Ai;
+using LessonPrep.Api.Application.Contracts.Documents;
+using LessonPrep.Api.Application.Services.Lessons;
 using LessonPrep.Api.Infrastructure.Ai;
 using LessonPrep.Api.Infrastructure.Documents;
 using LessonPrep.Api.Infrastructure.Security;

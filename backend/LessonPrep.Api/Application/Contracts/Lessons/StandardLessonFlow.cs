@@ -1,4 +1,6 @@
-namespace LessonPrep.Api.Application.Contracts;
+using LessonPrep.Api.Application.Dtos;
+
+namespace LessonPrep.Api.Application.Contracts.Lessons;
 
 public static class StandardLessonFlow
 {

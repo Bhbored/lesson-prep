@@ -1,10 +1,11 @@
-using LessonPrep.Api.Application.Services;
-using LessonPrep.Api.Infrastructure.Ai;
+using LessonPrep.Api.Application.Contracts.Ai;
+using LessonPrep.Api.Application.Dtos;
+using LessonPrep.Api.Application.Exceptions;
 using LessonPrep.Api.Infrastructure.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
-namespace LessonPrep.Api.Controllers.v1;
+namespace LessonPrep.Api.Controllers.v1.Ai;
 
 public sealed class AiController(CredentialCipher cipher, IEnumerable<IAiProvider> adapters) : LessonPrepControllerBase
 {

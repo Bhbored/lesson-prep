@@ -1,9 +1,7 @@
 using System.Text;
 
-namespace LessonPrep.Api.Application.Services;
+namespace LessonPrep.Api.Application.Services.Lessons;
 
-// Converts streaming JSON string values into readable provisional text.
-// The complete JSON is still parsed and validated before a variant becomes final.
 public sealed class ProvisionalTextExtractor
 {
     private readonly Stack<(char Kind, bool ExpectKey)> _containers = new();
