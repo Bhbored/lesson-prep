@@ -32,7 +32,9 @@ The app streams SSE through a POST `fetch` request. Configure your proxy/load ba
 | `ASPNETCORE_URLS` | Bind address/port required by the host, often `http://0.0.0.0:8080` behind TLS termination |
 | `ASPNETCORE_ENVIRONMENT` | `Production` for production hosting |
 
-Mount a stable production token secret via environment variable or secret manager. Rotating it makes existing browser-stored credential tokens unusable until each teacher enters a key again.
+Mount a stable production token secret via environment variable or secret manager. Never commit production secrets. Rotating `Crypto__TokenSecret` makes existing browser-stored credential tokens unusable until each teacher enters a key again.
+
+Optional rate-limit overrides: `RateLimits__Reads__PermitLimit`, `RateLimits__Models__PermitLimit`, `RateLimits__Generation__PermitLimit` (and matching `WindowSeconds`). Defaults are 120/30/10 requests per minute per IP.
 
 ## OCR service
 
@@ -49,14 +51,14 @@ The repository has no Dockerfiles or production manifests. Build the image/servi
 
 ## Release sequence
 
-1. Create and securely store a long-lived RSA private key. Mount it read-only to the ASP.NET process.
+1. Create and securely store a long-lived `Crypto__TokenSecret` (base64 32 bytes). Provide it via secret manager or environment variable.
 2. Deploy OCR privately and wait for `/health` to report readiness.
-3. Deploy ASP.NET with the key path, OCR URL, allowed frontend origins, and bind URL.
-4. Build and publish `frontend/dist/`; route `/api` to ASP.NET with streaming preserved.
-5. Verify API `/health`, the standard preset route, a provider model lookup with a real test key, and a scanned PDF through the full proxy path.
+3. Deploy ASP.NET with the token secret, OCR URL, allowed frontend origins, and bind URL.
+4. Build and publish `frontend/dist/`; route `/lessonprep` to ASP.NET with streaming preserved.
+5. Verify API `/health`, `GET /lessonprep/v1.0/LessonFlowPresets`, a provider model lookup with a real test key, and a scanned PDF through the full proxy path.
 
 ## Browser data and public access
 
 The latest normalized source text and completed lessons are kept in that browser's local storage. Clearing the browser profile loses them; there is no server backup or cross-device sync. Users on a shared computer should use separate browser profiles.
 
-This is an account-free MVP. The API has no user authentication, rate limits, or quotas. Add those controls before exposing generation to the public internet. OCR should remain private after hardening.
+This is an account-free MVP. The API has no user authentication. Fixed-window IP rate limits exist for reads, model listing, and generation, but they are not a substitute for auth or per-user quotas. Add those controls before exposing generation to the public internet. OCR should remain private after hardening.

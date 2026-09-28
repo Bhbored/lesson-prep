@@ -16,7 +16,7 @@ No PostgreSQL installation, schema, migration, or connection string is needed.
 Start these processes in separate terminals:
 
 1. OCR service from `ocr-service/`, listening on `127.0.0.1:8001`.
-2. ASP.NET API from `backend/LessonPrep.Api/`, listening on `localhost:5132` under the HTTP launch profile. Development loads `Crypto:TokenSecret` from `appsettings.Development.json`.
+2. ASP.NET API from `backend/LessonPrep.Api/`, listening on `localhost:5132` under the HTTP launch profile. Development loads `Crypto:TokenSecret` from the gitignored local file `appsettings.Development.json` (create it if missing).
 3. React from `frontend/`, using Vite on `localhost:5173`.
 
 The Vite development proxy forwards `/lessonprep` to ASP.NET. Production hosting needs its own reverse proxy or same-origin routing.
@@ -41,7 +41,7 @@ $rng.GetBytes($bytes)
 [Convert]::ToBase64String($bytes)
 ```
 
-Do not put a production token secret in checked-in JSON. Prefer `dotnet user-secrets` or environment variables for shared machines.
+Do not put a production token secret in checked-in JSON. `appsettings.Development.json` is gitignored for that reason. Prefer `dotnet user-secrets` or environment variables for shared machines.
 
 ## Useful commands
 

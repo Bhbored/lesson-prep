@@ -1,0 +1,26 @@
+---
+description: Route React work to the matching project skill before coding
+globs: frontend/**/*.{ts,tsx,jsx,js,css}
+alwaysApply: false
+---
+
+# React → project skills
+
+Before implementing React work, read and follow the matching skill under `.cursor/skills/`. Do not improvise past these skills when the subject matches.
+
+| Subject | Skill path |
+|---|---|
+| Components, hooks, props, modular React structure, design → code | `.cursor/skills/react-components/SKILL.md` |
+| Server state, fetching, caching, mutations, React Query / TanStack Query | `.cursor/skills/tanstack-query-best-practices/SKILL.md` |
+| Tables, datagrids, sorting, filtering, pagination (`@tanstack/react-table`) | `.cursor/skills/tanstack-table/SKILL.md` |
+| Zod schemas, `safeParse` / `parse`, `z.infer`, validation errors | `.cursor/skills/zod/SKILL.md` |
+| UI/UX design: layout, color, typography, spacing, interaction patterns | `.cursor/skills/ui-ux-pro-max/SKILL.md` |
+| UI/UX review, accessibility audit, Web Interface Guidelines check | `.cursor/skills/web-design-guidelines/SKILL.md` |
+| Refactor without behavior change (extract, rename, split, clean smells) | `.cursor/skills/refactor/SKILL.md` |
+
+## How to apply
+
+1. Identify the subject(s) from the task.
+2. Read each matching `SKILL.md` (and linked rule files under that skill if present).
+3. Follow that skill’s guidance for the change.
+4. If multiple subjects apply (e.g. a form with Zod + Query), load all matching skills.

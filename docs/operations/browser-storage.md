@@ -6,7 +6,7 @@ LessonPrep does not use a database. The API is stateless between requests. It pr
 
 | Location | Data | Lifetime |
 | --- | --- | --- |
-| Code (`StandardLessonFlow.cs`) | Exact Standard 45-Minute Lesson preset | Until the app code changes |
+| Code (`Application/Contracts/Lessons/StandardLessonFlow.cs`) | Exact Standard 45-Minute Lesson preset | Until the app code changes |
 | Browser local storage | Custom lesson flow presets | Until the browser profile clears site data |
 | Browser local storage | Credential tokens and selected provider/model | Until removed or site data is cleared |
 | Browser local storage | Latest preparation: class, duration, source language, ordered phase snapshot, bounded normalized source, optional prepared summary, and latest validated variants | Until replaced by a new preparation or site data is cleared |

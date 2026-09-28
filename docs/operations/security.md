@@ -8,7 +8,7 @@
 4. ASP.NET decrypts the token in memory, passes the key to the provider request, and does not store credentials on the server or in application logs.
 5. The token header includes a `kid` fingerprint of the secret. Rotating `Crypto:TokenSecret` changes that ID; old tokens are rejected and users must enter keys again.
 
-The backend keeps no per-user credential store. Keep the same token secret across restarts and replicas (env var or secret manager). Never commit a production secret or expose it to the frontend.
+The backend keeps no per-user credential store. Keep the same token secret across restarts and replicas (env var or secret manager). Never commit a production secret or expose it to the frontend. Local `appsettings.Development.json` is gitignored; production must use `Crypto__TokenSecret`.
 
 The token protects the key at rest in local storage from casual inspection, but the browser must send it to the API to use it. It cannot protect against malicious JavaScript on the same origin, browser extensions, or a compromised server. Serve the frontend/API only over HTTPS outside local development. Do not log request bodies for the credentials endpoint or the `X-Provider-Token` header.
 

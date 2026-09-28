@@ -6,9 +6,11 @@ LessonPrep is an account-free web application with three runtime components. It 
 | --- | --- | --- |
 | React frontend (`frontend/`) | Settings, uploads, browser-local presets/preparations, and streaming display | Public HTTPS site |
 | ASP.NET Core API (`backend/LessonPrep.Api/`) | Validates requests, extracts files, calls OCR and AI providers, and streams results | Public HTTPS API |
-| FastAPI/PaddleOCR (`ocr-service/`) | Converts rendered PDF page images to English or Arabic text | Private API-to-OCR network |
+| FastAPI/PaddleOCR (`ocr-service/`) | Converts rendered PDF page images to English, Arabic, or French text | Private API-to-OCR network |
 
 The Python OCR service is a narrow image-to-text service. ASP.NET handles everything about lessons, provider calls, and PDF page rendering. The standard lesson preset is defined by `StandardLessonFlow.cs`; custom presets and the latest preparation live in browser local storage.
+
+API routes are versioned under `lessonprep/v1.0/...` (see `Controllers/BaseController.cs`).
 
 ## Generation request
 
@@ -22,13 +24,18 @@ The Python OCR service is a narrow image-to-text service. ASP.NET handles everyt
 
 ## Main code locations
 
-- `backend/LessonPrep.Api/Program.cs` — routes, CORS, error handling, and service registration.
-- `backend/LessonPrep.Api/Contracts/StandardLessonFlow.cs` — static default preset.
-- `backend/LessonPrep.Api/Documents/DocumentProcessor.cs` — upload validation, extraction, rendering, and OCR HTTP client.
+- `backend/LessonPrep.Api/Program.cs` — middleware pipeline (Serilog, HSTS, HTTPS redirection, CORS, rate limiting, HTTP logging, Swagger).
+- `backend/LessonPrep.Api/Helpers/DIContainer.cs` — DI, versioning, rate limits, JSON options, HTTP clients.
+- `backend/LessonPrep.Api/Controllers/v1/` — versioned controllers (`Ai`, `Lessons`).
+- `backend/LessonPrep.Api/Application/Contracts/Lessons/StandardLessonFlow.cs` — static default preset.
+- `backend/LessonPrep.Api/Helpers/documents/` — upload validation, CSV/PDF extraction, OCR orchestration.
+- `backend/LessonPrep.Api/Infrastructure/OCR/PaddleOcrClient.cs` — HTTP client for the OCR service.
+- `backend/LessonPrep.Api/Infrastructure/Ai/` — four provider adapters behind `IAiProvider`.
+- `backend/LessonPrep.Api/Helpers/prompts/LessonPrompt.cs` and `Helpers/schemas/LessonSchema.cs` — shared lesson prompt and JSON schema.
+- `backend/LessonPrep.Api/Application/Services/Lessons/GenerationService.cs` — snapshots, generation, validation, and SSE orchestration.
+- `backend/LessonPrep.Api/Infrastructure/Security/CredentialTokenService.cs` — JWE credential token issue/open.
 - `ocr-service/app/main.py` — PaddleOCR image-to-text endpoint.
-- `backend/LessonPrep.Api/Ai/Providers.cs` — four provider adapters.
-- `backend/LessonPrep.Api/Generation/GenerationService.cs` — snapshots, generation, validation, and SSE writing.
-- `frontend/src/App.tsx` and `frontend/src/api.ts` — UI state, browser encryption/storage, and SSE parsing.
+- `frontend/src/App.tsx` and `frontend/src/api.ts` — UI state, credential tokens, local storage, and SSE parsing.
 
 ## PaddleOCR source checkout
 

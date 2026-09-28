@@ -1,6 +1,12 @@
 # Documents and OCR
 
-The document pipeline is implemented in `backend/LessonPrep.Api/Documents/DocumentProcessor.cs`. ASP.NET owns file validation, PDF parsing, page rendering, and text normalization. Python only receives rendered images and returns OCR text.
+The document pipeline lives under `backend/LessonPrep.Api/Helpers/documents/`:
+
+- `DocumentProcessor.cs` — upload validation, orchestration, and text normalization.
+- `CsvToText.cs` — CSV parsing into labeled text.
+- `PdfToText.cs` — PdfPig native text and PDFtoImage rendering for weak pages.
+
+OCR HTTP calls go through `backend/LessonPrep.Api/Infrastructure/OCR/PaddleOcrClient.cs`. ASP.NET owns file validation, PDF parsing, page rendering, and text normalization. Python only receives rendered images and returns OCR text.
 
 ## File flow
 

@@ -4,13 +4,18 @@ ASP.NET Core reads standard JSON configuration and environment variables. Enviro
 
 | Environment variable | Purpose | Local default |
 | --- | --- | --- |
-| `Crypto__TokenSecret` | Base64-encoded 32-byte secret for JWE credential tokens | Dev value in `appsettings.Development.json`; empty in base `appsettings.json` |
+| `Crypto__TokenSecret` | Base64-encoded 32-byte secret for JWE credential tokens | Local-only `appsettings.Development.json` (gitignored); empty in base `appsettings.json` |
 | `OcrService__BaseUrl` | FastAPI base address | `http://localhost:8001` |
 | `Frontend__Origins__0` | First allowed browser origin (use `__1`, `__2`, etc. for more) | `http://localhost:5173` |
+| `RateLimits__Reads__PermitLimit` / `WindowSeconds` | IP rate limit for general reads | `120` / `60` |
+| `RateLimits__Models__PermitLimit` / `WindowSeconds` | IP rate limit for credentials + model listing | `30` / `60` |
+| `RateLimits__Generation__PermitLimit` / `WindowSeconds` | IP rate limit for generate/regenerate | `10` / `60` |
 | `ASPNETCORE_ENVIRONMENT` | ASP.NET environment | `Development` from local launch profile |
 | `ASPNETCORE_URLS` | Kestrel bind URL(s) when set by the host | launch profile uses `http://localhost:5132` |
 
 For production, set `Frontend__Origins__0=https://lessons.example.com`. For multiple origins, add `Frontend__Origins__1`, `Frontend__Origins__2`, and so on. The array comes from `Frontend:Origins` in configuration.
+
+`appsettings.Development.json` is gitignored because it holds the local token secret. Create it locally (or use `dotnet user-secrets` / env vars). Do not commit production secrets.
 
 ## Current processing limits
 
@@ -21,7 +26,6 @@ For production, set `Frontend__Origins__0=https://lessons.example.com`. For mult
 - Sources over 80,000 characters are summarized in chunks before lesson generation; the prepared source is kept for regeneration.
 - OCR input is capped at 15 MiB and 30 million pixels per page.
 - At most 3 alternatives, with a bounded AI response and one retry for invalid output.
-- ASP.NET request body size is set to 110 MiB to accommodate multipart overhead and multiple allowed files.
 - AI HTTP timeout is five minutes; OCR HTTP timeout is two minutes.
 
-These are application-level defaults in code. If you change them, adjust request-body, proxy, provider timeout, memory, and abuse controls together. For public use, consider lower per-user quotas after adding authentication.
+These are application-level defaults in code. If you change them, adjust proxy, provider timeout, memory, and abuse controls together. For public use, consider lower per-user quotas after adding authentication.
