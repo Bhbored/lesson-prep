@@ -1,15 +1,18 @@
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using LessonPrep.Api.Application.Contracts.Ai;
 using LessonPrep.Api.Application.Dtos;
+using LessonPrep.Api.Application.Enums;
 using LessonPrep.Api.Application.Exceptions;
-using LessonPrep.Api.Application.Services.Lessons;
+using LessonPrep.Api.Helpers.Prompts;
+using LessonPrep.Api.Helpers.Schemas;
 
 namespace LessonPrep.Api.Infrastructure.Ai;
 
 public sealed class OpenAiProvider(IHttpClientFactory factory) : AiProviderBase(factory)
 {
-    public override string Id => "openai";
+    public override AiProvider Provider => AiProvider.OpenAi;
     public override async Task<IReadOnlyList<AiModel>> ListModelsAsync(string apiKey, CancellationToken ct)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.openai.com/v1/models");

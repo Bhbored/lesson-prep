@@ -103,8 +103,12 @@ public static class DIContainer
     public static IServiceCollection RegisterControllers(this IServiceCollection services)
     {
         services.AddControllers()
-            .AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy =
-                System.Text.Json.JsonNamingPolicy.CamelCase);
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+                options.JsonSerializerOptions.Converters.Add(
+                    new System.Text.Json.Serialization.JsonStringEnumConverter());
+            });
         return services;
     }
 

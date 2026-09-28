@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using LessonPrep.Api.Application.Contracts.Ai;
 using LessonPrep.Api.Application.Dtos;
+using LessonPrep.Api.Application.Enums;
 using LessonPrep.Api.Application.Exceptions;
 
 namespace LessonPrep.Api.Infrastructure.Ai;
@@ -10,7 +11,7 @@ namespace LessonPrep.Api.Infrastructure.Ai;
 public abstract class AiProviderBase(IHttpClientFactory factory) : IAiProvider
 {
     protected readonly HttpClient Client = factory.CreateClient("ai");
-    public abstract string Id { get; }
+    public abstract AiProvider Provider { get; }
     public abstract Task<IReadOnlyList<AiModel>> ListModelsAsync(string apiKey, CancellationToken cancellationToken);
     public abstract IAsyncEnumerable<string> StreamLessonJsonAsync(string apiKey, string model, LessonAiRequest request, CancellationToken cancellationToken);
     public abstract Task<string> SummarizeChunkAsync(string apiKey, string model, string chunk, CancellationToken cancellationToken);

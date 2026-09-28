@@ -1,6 +1,6 @@
 using LessonPrep.Api.Application.Dtos;
 
-namespace LessonPrep.Api.Application.Services.Lessons;
+namespace LessonPrep.Api.Helpers.Prompts;
 
 public static class LessonPrompt
 {

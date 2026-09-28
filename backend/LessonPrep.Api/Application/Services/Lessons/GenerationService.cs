@@ -1,9 +1,12 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using LessonPrep.Api.Application.Contracts.Ai;
 using LessonPrep.Api.Application.Contracts.Lessons;
 using LessonPrep.Api.Application.Dtos;
+using LessonPrep.Api.Application.Enums;
 using LessonPrep.Api.Application.Exceptions;
+using LessonPrep.Api.Application.Validators;
 using LessonPrep.Api.Infrastructure.Documents;
 using LessonPrep.Api.Infrastructure.Security;
 
@@ -15,8 +18,11 @@ public sealed class GenerationService(
     IEnumerable<IAiProvider> providers,
     ILogger<GenerationService> logger)
 {
-    private readonly IReadOnlyDictionary<string, IAiProvider> _providers = providers.ToDictionary(x => x.Id);
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private readonly IReadOnlyDictionary<AiProvider, IAiProvider> _providers = providers.ToDictionary(x => x.Provider);
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+    };
 
     public static IReadOnlyList<PhaseSpec> ResolvePhases(string? presetId, string? customPhases)
     {
@@ -68,7 +74,7 @@ public sealed class GenerationService(
         LessonValidator.ValidateFlow(snapshot.ClassName, snapshot.TotalDurationMinutes, snapshot.Phases, count);
     }
 
-    public async Task GenerateAsync(PreparationSnapshot snapshot, int count, int round, string providerId, string model,
+    public async Task GenerateAsync(PreparationSnapshot snapshot, int count, int round, AiProvider providerId, string model,
         EncryptedCredential credential, HttpResponse response, CancellationToken ct)
     {
         ValidateSnapshot(snapshot, count, round);

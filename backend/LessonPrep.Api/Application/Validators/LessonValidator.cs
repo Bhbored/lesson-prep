@@ -2,7 +2,7 @@ using System.Text.Json;
 using LessonPrep.Api.Application.Dtos;
 using LessonPrep.Api.Application.Exceptions;
 
-namespace LessonPrep.Api.Application.Services.Lessons;
+namespace LessonPrep.Api.Application.Validators;
 
 public static class LessonValidator
 {

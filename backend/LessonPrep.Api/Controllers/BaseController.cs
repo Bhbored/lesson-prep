@@ -8,6 +8,6 @@ namespace LessonPrep.Api.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [EnableRateLimiting("reads")]
-public class LessonPrepControllerBase : ControllerBase
+public class BaseController : ControllerBase
 {
 }

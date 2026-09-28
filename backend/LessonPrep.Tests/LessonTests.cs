@@ -8,6 +8,7 @@ using LessonPrep.Api.Application.Contracts.Lessons;
 using LessonPrep.Api.Application.Dtos;
 using LessonPrep.Api.Application.Exceptions;
 using LessonPrep.Api.Application.Services.Lessons;
+using LessonPrep.Api.Application.Validators;
 using LessonPrep.Api.Infrastructure.Ai;
 using LessonPrep.Api.Infrastructure.Documents;
 using LessonPrep.Api.Infrastructure.Security;

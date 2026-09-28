@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace LessonPrep.Api.Application.Services.Lessons;
+namespace LessonPrep.Api.Helpers.Schemas;
 
 public static class LessonSchema
 {

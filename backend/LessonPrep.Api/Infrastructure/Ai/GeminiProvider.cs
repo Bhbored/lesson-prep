@@ -1,14 +1,17 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using LessonPrep.Api.Application.Contracts.Ai;
 using LessonPrep.Api.Application.Dtos;
+using LessonPrep.Api.Application.Enums;
 using LessonPrep.Api.Application.Exceptions;
-using LessonPrep.Api.Application.Services.Lessons;
+using LessonPrep.Api.Helpers.Prompts;
+using LessonPrep.Api.Helpers.Schemas;
 
 namespace LessonPrep.Api.Infrastructure.Ai;
 
 public sealed class GeminiProvider(IHttpClientFactory factory) : AiProviderBase(factory)
 {
-    public override string Id => "gemini";
+    public override AiProvider Provider => AiProvider.Gemini;
     public override async Task<IReadOnlyList<AiModel>> ListModelsAsync(string apiKey, CancellationToken ct)
     {
         var results = new List<AiModel>();

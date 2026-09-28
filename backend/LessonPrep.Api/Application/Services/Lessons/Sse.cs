@@ -1,10 +1,14 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace LessonPrep.Api.Application.Services.Lessons;
 
 public static class Sse
 {
-    private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
     public static async Task WriteAsync(HttpResponse response, string eventName, object value, CancellationToken ct)
     {
         if (!response.HasStarted)
