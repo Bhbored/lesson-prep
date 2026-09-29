@@ -3,14 +3,14 @@
   margin: 0;
   padding: 0;
   background: #fff;
-  color: #20212a;
+  color: #203329;
   font:
     10.5pt/1.45 Arial,
     sans-serif;
 }
 .pdf-export .result-hero {
-  background: #f0ecff;
-  border: 1px solid #dcd4ff;
+  background: #e6f3e5;
+  border: 1px solid #bedcc1;
   border-radius: 8px;
   padding: 18px 20px;
   margin: 0 0 14px;
@@ -29,7 +29,7 @@
 }
 .pdf-export .panel {
   padding: 13px;
-  border: 1px solid #dfe1e7;
+  border: 1px solid #dce8dc;
   border-radius: 8px;
   box-shadow: none;
   break-inside: avoid;
@@ -51,7 +51,7 @@
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  border-bottom: 1px solid #e6e3f2;
+  border-bottom: 1px solid #dce8dc;
   padding-bottom: 5px;
   margin-bottom: 7px;
 }

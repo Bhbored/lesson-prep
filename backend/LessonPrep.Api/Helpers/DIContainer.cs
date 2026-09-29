@@ -39,8 +39,6 @@ public static class DIContainer
             options.ForwardLimit = 1;
             options.ForwardedForHeaderName = configuration["ReverseProxy:ClientIpHeader"] ?? "X-Forwarded-For";
 
-            // Managed ingress can use changing addresses. Opt in only when all public
-            // traffic reaches Kestrel through a proxy that overwrites these headers.
             if (configuration.GetValue<bool>("ReverseProxy:TrustAll"))
             {
                 options.KnownProxies.Clear();

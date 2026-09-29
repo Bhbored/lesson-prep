@@ -41,7 +41,6 @@ else
     app.UseHsts();
 }
 
-// Platform health probes use internal HTTP even when public ingress uses HTTPS.
 app.UseWhen(context => context.Request.Path != "/health" && context.Request.Path != "/health/live",
     branch => branch.UseHttpsRedirection());
 app.UseCors();

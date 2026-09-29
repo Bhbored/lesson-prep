@@ -1,8 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap");
 :root {
   font-family: "DM Sans", system-ui, sans-serif;
-  color: #272b33;
-  background: #f8f9fb;
+  color: #203329;
+  background: #f5f8f3;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -44,24 +43,8 @@ a {
 }
 
 :focus-visible {
-  outline: 3px solid #6c51c5;
+  outline: 3px solid #286744;
   outline-offset: 3px;
-}
-.nav-item,
-a.text-button,
-a.primary-button {
-  text-decoration: none;
-}
-.skip-link {
-  position: absolute;
-  z-index: 100;
-  inset: 8px auto auto 8px;
-  padding: 12px;
-  background: white;
-  transform: translateY(-200%);
-}
-.skip-link:focus {
-  transform: none;
 }
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -15,14 +15,13 @@ export function Topbar() {
     "/settings": t.settings,
   };
   return (
-    <header className="topbar">
+    <header className="topbar border-line flex h-[72px] items-center justify-between border-b text-sm text-muted">
       <span>{labels[pathname]}</span>
-      <div className="topbar-right">
-        <span className="provider-pill">
-          <img src={logos[settings.provider]} width={18} height={18} alt="" />
+      <div className="topbar-right flex items-center gap-2">
+        <span className="provider-pill flex items-center gap-2 rounded-lg border border-line bg-paper px-3 py-2 text-xs font-semibold text-ink">
+          <img className="size-[18px] object-contain" src={logos[settings.provider]} width={18} height={18} alt="" />
           {providerNames[settings.provider]}
         </span>
-        <span className="avatar">T</span>
       </div>
     </header>
   );

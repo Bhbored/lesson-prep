@@ -42,14 +42,14 @@
     padding: 0 !important;
     border: 0 !important;
     box-shadow: none !important;
-    color: #20212a !important;
+    color: #203329 !important;
     font:
       10.5pt/1.45 Arial,
       sans-serif !important;
   }
   .result-hero {
-    background: #f0ecff !important;
-    border: 1px solid #dcd4ff !important;
+    background: #e6f3e5 !important;
+    border: 1px solid #bedcc1 !important;
     border-radius: 8px !important;
     padding: 18px 20px !important;
     margin: 0 0 14px !important;
@@ -62,7 +62,7 @@
   }
   .result-hero p,
   .result-meta {
-    color: #454052 !important;
+    color: #405648 !important;
   }
   .result-summary {
     display: grid !important;
@@ -72,7 +72,7 @@
   }
   .lesson-result .panel {
     padding: 13px !important;
-    border: 1px solid #dfe1e7 !important;
+    border: 1px solid #dce8dc !important;
     border-radius: 8px !important;
     box-shadow: none !important;
     break-inside: avoid-page;
@@ -98,7 +98,7 @@
     display: flex !important;
     justify-content: space-between !important;
     align-items: baseline !important;
-    border-bottom: 1px solid #e6e3f2 !important;
+    border-bottom: 1px solid #dce8dc !important;
     padding-bottom: 5px !important;
     margin-bottom: 7px !important;
   }
@@ -108,7 +108,7 @@
     gap: 12px !important;
   }
   .question-block {
-    background: #faf9ff !important;
+    background: #f4faf3 !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
