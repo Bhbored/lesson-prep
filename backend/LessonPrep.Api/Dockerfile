@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 COPY --from=build /out ./
 ENV ASPNETCORE_ENVIRONMENT=Production
-EXPOSE 8080
+EXPOSE 10000
 USER $APP_UID
-# Railway injects PORT. exec delivers termination signals directly to dotnet.
-ENTRYPOINT ["/bin/sh", "-c", "exec dotnet LessonPrep.Api.dll --urls http://0.0.0.0:${PORT:-8080}"]
+# Render sets PORT; exec delivers termination signals directly to dotnet.
+ENTRYPOINT ["/bin/sh", "-c", "exec dotnet LessonPrep.Api.dll --urls http://0.0.0.0:${PORT:-10000}"]

@@ -13,16 +13,16 @@ ASP.NET Core reads standard JSON configuration and environment variables. Enviro
 | `ASPNETCORE_ENVIRONMENT` | ASP.NET environment | `Development` from local launch profile |
 | `ASPNETCORE_URLS` | Kestrel bind URL(s) when set by the host | HTTPS launch profile uses `https://localhost:7132;http://localhost:5132` |
 | `ReverseProxy__TrustAll` | Trust changing managed-ingress addresses; opt in only behind controlled ingress | `false` |
-| `ReverseProxy__ClientIpHeader` | Client IP header consumed by forwarding middleware | `X-Forwarded-For`; set `X-Real-IP` on Railway |
+| `ReverseProxy__ClientIpHeader` | Client IP header consumed by forwarding middleware | `X-Forwarded-For`; Render Blueprint sets `CF-Connecting-IP` |
 | `ReverseProxy__KnownProxies__0` | Additional trusted proxy IP (use `__1`, etc.) | None beyond framework loopback defaults |
 | `ReverseProxy__KnownNetworks__0` | Additional trusted proxy CIDR (use `__1`, etc.) | None beyond framework defaults |
-| `PORT` | Container HTTP port; Railway injects it | `8080` in the Docker entrypoint |
+| `PORT` | Container HTTP port; Render supplies it | `10000` in the Docker entrypoint |
 
 For production, set `Frontend__Origins__0=https://lessons.example.com`. For multiple origins, add `Frontend__Origins__1`, `Frontend__Origins__2`, and so on. The array comes from `Frontend:Origins` in configuration.
 
 `appsettings.Development.json` is gitignored because it holds the local token secret. Create it locally (or use `dotnet user-secrets` / env vars). Do not commit production secrets.
 
-The API resolves `CredentialTokenService` during startup and fails immediately if the secret is missing, invalid base64, or not exactly 32 bytes. Forwarded headers run before HTTPS redirection, HSTS, and rate limiting, consuming one trusted hop. Product requests redirect to HTTPS (port 443 in Production); `/health` and `/health/live` remain available for internal HTTP probes. HSTS runs outside Development. Launch profiles apply to local `dotnet run`, not a published service. See [Hosting](../deployment/hosting.md) for Railway/Cloudflare setup. Leave `ASPNETCORE_FORWARDEDHEADERS_ENABLED` unset to avoid framework auto-configuration duplicating the explicit middleware.
+The API resolves `CredentialTokenService` during startup and fails immediately if the secret is missing, invalid base64, or not exactly 32 bytes. Forwarded headers run before HTTPS redirection, HSTS, and rate limiting, consuming one trusted hop. Product requests redirect to HTTPS (port 443 in Production); `/health` and `/health/live` remain available for internal HTTP probes. HSTS runs outside Development. Launch profiles apply to local `dotnet run`, not a published service. See [Hosting](../deployment/hosting.md) for the Render setup. Leave `ASPNETCORE_FORWARDEDHEADERS_ENABLED` unset to avoid framework auto-configuration duplicating the explicit middleware.
 
 ## Frontend and test configuration
 
@@ -35,7 +35,7 @@ The API resolves `CredentialTokenService` during startup and fails immediately i
 
 `frontend/vite.config.ts` proxies `/lessonprep` to `https://localhost:7132`, accepting the ASP.NET development certificate with `secure: false`. This applies only to the local proxy; production TLS verification is controlled by the production proxy. The frontend dev server itself uses HTTP on port 5173. Never put secrets in `VITE_*` variables: their values are compiled into browser code.
 
-Serilog writes to the console and a Seq sink at `http://localhost:5341` in base configuration. Seq is optional for local operation. Configure the `Serilog` section for the deployment's logging destination; the API does not host Seq. `/health` and `/health/live` return process liveness only, without initializing OCR or checking provider connectivity. Swagger is currently enabled in every environment at `/swagger`.
+Serilog writes to standard output, which Render captures. `/health` and `/health/live` return process liveness only, without initializing OCR or checking provider connectivity. Swagger is currently enabled in every environment at `/swagger`.
 
 ## Current processing limits
 

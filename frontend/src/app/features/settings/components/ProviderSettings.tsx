@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Check, KeyRound, RefreshCw, Server } from "lucide-react";
 import type { useSettingsPage } from "@/app/features/settings/hooks/useSettingsPage";
 interface ProviderSettingsProps {
@@ -50,6 +51,12 @@ export function ProviderSettings({ model }: Readonly<ProviderSettingsProps>) {
           <div>
             <h3 className="font-semibold">{t.aiProvider}</h3>
             <p className="mt-0.5 text-xs text-muted">{t.providerHelp}</p>
+            <Link
+              className="mt-2 inline-flex min-h-11 items-center text-xs font-bold text-leaf-700 hover:underline"
+              to="/guide"
+            >
+              {t.guideFromSettings}
+            </Link>
           </div>
         </div>
         <div className="provider-grid grid grid-cols-2 gap-3 sm:grid-cols-4">

@@ -59,6 +59,7 @@ public sealed class ReverseProxyTests
     [Theory]
     [InlineData("X-Forwarded-For")]
     [InlineData("X-Real-IP")]
+    [InlineData("CF-Connecting-IP")]
     public async Task RateLimitsUseForwardedClientAddresses(string header)
     {
         await using var app = Create(("ReverseProxy:TrustAll", "true"), ("ReverseProxy:ClientIpHeader", header));

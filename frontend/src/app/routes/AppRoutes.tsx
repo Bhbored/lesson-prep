@@ -14,6 +14,7 @@ const SettingsPage = lazy(
 const ResultsPage = lazy(
   () => import("@/app/features/results/pages/ResultsPage"),
 );
+const GuidePage = lazy(() => import("@/app/features/guide/pages/GuidePage"));
 export function AppRoutes() {
   return (
     <Suspense
@@ -28,8 +29,9 @@ export function AppRoutes() {
           <Route index element={<Navigate to="/prepare" replace />} />
           <Route path="prepare" element={<PreparePage />} />
           <Route path="presets" element={<PresetsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
           <Route path="results" element={<ResultsPage />} />
+          <Route path="guide" element={<GuidePage />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/prepare" replace />} />
         </Route>
       </Routes>
