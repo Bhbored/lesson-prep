@@ -120,6 +120,7 @@
   "guideStepBilling": "Ajouter la facturation",
   "guideStepKey": "Créer votre clé API",
   "guideOpenLink": "Ouvrir la page officielle",
+  "guideScreenshotPending": "Capture réelle à venir — suivez le lien officiel pour l’instant.",
   "guideKeyWarningTitle": "Enregistrez la clé en lieu sûr",
   "guideKeyWarning": "Les fournisseurs n’affichent le secret complet qu’une seule fois. Copiez-le dans un gestionnaire de mots de passe avant de fermer la fenêtre — vous ne pourrez plus le récupérer.",
   "guideNoStore": "LessonPrep n’a pas de base de données de clés. Nous ne conservons qu’un jeton chiffré dans ce navigateur et ne réaffichons jamais le secret. Si vous perdez la clé, créez-en une nouvelle chez le fournisseur.",

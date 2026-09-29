@@ -6,7 +6,6 @@ type MessageKey = keyof typeof en;
 
 export interface GuideStepMeta {
   readonly id: GuideStepId;
-  readonly image: string;
   readonly titleKey: Extract<
     MessageKey,
     "guideStepAccount" | "guideStepBilling" | "guideStepKey"
@@ -21,24 +20,23 @@ export interface ProviderGuideLinks {
   readonly accountBodyKey: MessageKey;
   readonly billingBodyKey: MessageKey;
   readonly keyBodyKey: MessageKey;
+  /** Real console screenshots under /public/guide — omit until captured. */
+  readonly images: Partial<Record<GuideStepId, string>>;
 }
 
 export const guideStepOrder: readonly GuideStepMeta[] = [
   {
     id: "account",
-    image: "/guide/step-account.png",
     titleKey: "guideStepAccount",
     urlField: "signupUrl",
   },
   {
     id: "billing",
-    image: "/guide/step-billing.png",
     titleKey: "guideStepBilling",
     urlField: "billingUrl",
   },
   {
     id: "key",
-    image: "/guide/step-key.png",
     titleKey: "guideStepKey",
     urlField: "keysUrl",
   },
@@ -54,6 +52,11 @@ export const providerGuideLinks: Record<ProviderId, ProviderGuideLinks> = {
     accountBodyKey: "guideOpenAiAccount",
     billingBodyKey: "guideOpenAiBilling",
     keyBodyKey: "guideOpenAiKey",
+    images: {
+      account: "/guide/openai-account.png",
+      billing: "/guide/openai-billing.png",
+      key: "/guide/openai-key.png",
+    },
   },
   gemini: {
     signupUrl: "https://aistudio.google.com/",
@@ -62,6 +65,11 @@ export const providerGuideLinks: Record<ProviderId, ProviderGuideLinks> = {
     accountBodyKey: "guideGeminiAccount",
     billingBodyKey: "guideGeminiBilling",
     keyBodyKey: "guideGeminiKey",
+    images: {
+      account: "/guide/gemini-account.png",
+      billing: "/guide/gemini-billing.png",
+      key: "/guide/gemini-key.png",
+    },
   },
   anthropic: {
     signupUrl: "https://console.anthropic.com/",
@@ -70,6 +78,11 @@ export const providerGuideLinks: Record<ProviderId, ProviderGuideLinks> = {
     accountBodyKey: "guideAnthropicAccount",
     billingBodyKey: "guideAnthropicBilling",
     keyBodyKey: "guideAnthropicKey",
+    images: {
+      account: "/guide/anthropic-account.png",
+      billing: "/guide/anthropic-billing.png",
+      key: "/guide/anthropic-key.png",
+    },
   },
   deepSeek: {
     signupUrl: "https://platform.deepseek.com/sign_up",
@@ -78,6 +91,11 @@ export const providerGuideLinks: Record<ProviderId, ProviderGuideLinks> = {
     accountBodyKey: "guideDeepSeekAccount",
     billingBodyKey: "guideDeepSeekBilling",
     keyBodyKey: "guideDeepSeekKey",
+    images: {
+      account: "/guide/deepseek-account.png",
+      billing: "/guide/deepseek-billing.png",
+      key: "/guide/deepseek-key.png",
+    },
   },
 };
 

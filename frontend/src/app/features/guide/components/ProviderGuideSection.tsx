@@ -54,13 +54,14 @@ export function ProviderGuideSection({
           return (
             <GuideStep
               key={step.id}
-              step={step}
               stepNumber={index + 1}
               title={t[step.titleKey]}
               body={t[bodyKey]}
               href={href}
               openLabel={t.guideOpenLink}
+              imageSrc={links.images[step.id]}
               imageAlt={`${name} — ${t[step.titleKey]}`}
+              pendingLabel={t.guideScreenshotPending}
             />
           );
         })}

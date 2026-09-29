@@ -70,13 +70,19 @@ export function ProviderSettings({ model }: Readonly<ProviderSettingsProps>) {
                 setNotice("");
               }}
             >
-              <img className="size-7 object-contain" src={logos[id]} width={28} height={28} alt="" />
+              <img
+                className="size-7 object-contain"
+                src={logos[id]}
+                width={28}
+                height={28}
+                alt=""
+              />
               <strong className="text-xs">{providerNames[id]}</strong>
               {settings.keys[id] && (
                 <Check
                   aria-hidden="true"
                   size={15}
-                  className="provider-check absolute end-2 top-2 text-leaf-700"
+                  className="provider-check absolute inset-e-2 top-2 text-leaf-700"
                 />
               )}
             </button>
@@ -87,7 +93,11 @@ export function ProviderSettings({ model }: Readonly<ProviderSettingsProps>) {
             <label className="field-label block text-xs font-semibold text-muted">
               {providerNames[settings.provider]} {t.apiKey}
               <div className="key-input-wrap relative mt-2">
-                <KeyRound className="absolute start-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true" size={17} />
+                <KeyRound
+                  className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-muted"
+                  aria-hidden="true"
+                  size={17}
+                />
                 <input
                   className="block min-h-11 w-full max-w-lg rounded-lg border border-[#7a9982] bg-white py-2 pe-3 ps-10 text-sm text-ink focus-visible:border-leaf-600"
                   type="password"
@@ -112,7 +122,10 @@ export function ProviderSettings({ model }: Readonly<ProviderSettingsProps>) {
               {t.saveKey}
             </button>
             {settings.keys[settings.provider] && (
-              <button className="text-button danger min-h-11 px-2 font-semibold text-red-700" onClick={removeKey}>
+              <button
+                className="text-button danger min-h-11 px-2 font-semibold text-red-700"
+                onClick={removeKey}
+              >
                 {t.removeKey}
               </button>
             )}

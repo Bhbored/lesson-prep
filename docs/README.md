@@ -11,6 +11,7 @@ Start here if you are new to the repository. The root [README](../README.md) is 
 - [AI providers and streaming](architecture/providers-and-streaming.md) — model discovery, shared schema, validation, and SSE.
 - [Local development](development/local-setup.md) — tools, commands, configuration, and useful checks.
 - [Hosting and deployment](deployment/hosting.md) — Render API container from GitHub, HTTPS/proxy trust, and deployment checks.
+- [Frontend on Cloudflare Pages](deployment/frontend-cloudflare.md) — Wrangler deploy, `VITE_API_URL`, and CORS with Render.
 - [Configuration reference](operations/configuration.md) — environment variables and application limits.
 - [Browser storage and snapshots](operations/browser-storage.md) — what remains in the browser and how regeneration works.
 - [Provider keys and application security](operations/security.md) — JWE credential tokens, secret rotation, and current MVP exposure.

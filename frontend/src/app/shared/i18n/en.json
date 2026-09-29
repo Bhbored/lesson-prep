@@ -120,6 +120,7 @@
   "guideStepBilling": "Add billing",
   "guideStepKey": "Create your API key",
   "guideOpenLink": "Open official page",
+  "guideScreenshotPending": "Real console screenshot coming soon — follow the official link for now.",
   "guideKeyWarningTitle": "Save the key somewhere safe",
   "guideKeyWarning": "Providers show the full secret only once. Copy it into a password manager before you close the dialog — you cannot retrieve it later.",
   "guideNoStore": "LessonPrep has no database of keys. We only keep an encrypted token in this browser and never show the secret again. If you lose the key, create a new one at the provider.",
