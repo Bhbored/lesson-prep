@@ -8,6 +8,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { usePresetsPage } from "@/app/features/presets/hooks/usePresetsPage";
+import { displayedPhaseName } from "@/app/features/presets/standardFlow";
 export default function PresetsPage() {
   const model = usePresetsPage();
   const {
@@ -25,6 +26,7 @@ export default function PresetsPage() {
     savePreset,
     createPreset,
     canCreatePreset,
+    displayLanguage,
   } = model;
   return (
     <div className="page-content">
@@ -187,7 +189,7 @@ export default function PresetsPage() {
                     <span className="phase-index">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <strong>{phase.name}</strong>
+                    <strong>{displayedPhaseName(selectedPreset, phase, displayLanguage)}</strong>
                     <span>
                       {phase.durationMinutes} {t.minutes}
                     </span>

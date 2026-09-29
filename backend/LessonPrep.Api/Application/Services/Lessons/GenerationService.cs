@@ -20,7 +20,8 @@ public sealed class GenerationService(
 {
     private readonly IReadOnlyDictionary<AiProvider, IAiProvider> _providers = providers.ToDictionary(x => x.Provider);
 
-    public static IReadOnlyList<PhaseSpec> ResolvePhases(string? presetId, string? customPhases)
+    public static IReadOnlyList<PhaseSpec> ResolvePhases(string? presetId, string? customPhases,
+        string language = "en")
     {
         if (!string.IsNullOrWhiteSpace(presetId) == !string.IsNullOrWhiteSpace(customPhases))
             throw new LessonValidationException("Select the standard preset or provide custom phases.");
@@ -28,7 +29,7 @@ public sealed class GenerationService(
         {
             if (!Guid.TryParse(presetId, out var id) || id != StandardLessonFlow.Id)
                 throw new LessonValidationException("Lesson flow preset was not found.");
-            return StandardLessonFlow.Create().Phases;
+            return StandardLessonFlow.Create(language).Phases;
         }
 
         try
@@ -66,14 +67,15 @@ public sealed class GenerationService(
         if (!int.TryParse(Required("totalDurationMinutes"), out var duration)
             || !int.TryParse(Required("variantCount"), out var count))
             throw new LessonValidationException("Duration and variant count must be numbers.");
-        var phases = ResolvePhases(form["lessonFlowPresetId"], form["customPhases"]);
+        var language = Required("sourceLanguage");
+        var phases = ResolvePhases(form["lessonFlowPresetId"], form["customPhases"], language);
         LessonValidator.ValidateFlow(className, duration, phases, count);
         var credentialToken = Required("credentialToken");
         if (!Enum.TryParse<AiProvider>(Required("provider"), true, out var provider) || !Enum.IsDefined(provider))
             throw new LessonValidationException("Unknown AI provider.");
 
         return new GenerateRequest(
-            className, duration, count, Required("sourceLanguage"), phases, provider, Required("model"),
+            className, duration, count, language, phases, provider, Required("model"),
             credentialToken, [.. form.Files]);
     }
 

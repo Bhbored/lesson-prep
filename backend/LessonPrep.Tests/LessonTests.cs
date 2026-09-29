@@ -35,6 +35,22 @@ public sealed class LessonTests
         Assert.Throws<LessonValidationException>(() => GenerationService.ResolvePhases(Guid.NewGuid().ToString(), null));
     }
 
+    [Theory]
+    [InlineData("ar", "تمهيد", "شرح الدرس", "تطبيق", "تقييم", "خاتمة")]
+    [InlineData("fr", "Mise en route", "Enseignement", "Mise en pratique", "Évaluation", "Conclusion")]
+    public void StandardPresetUsesGenerationLanguageForPhaseNames(string language,
+        string first, string second, string third, string fourth, string fifth)
+    {
+        var phases = GenerationService.ResolvePhases(StandardLessonFlow.Id.ToString(), null, language);
+        Assert.Equal(new[] { first, second, third, fourth, fifth }, phases.Select(phase => phase.Name));
+        Assert.Equal(Flow.Select(phase => phase.DurationMinutes), phases.Select(phase => phase.DurationMinutes));
+        Assert.Equal(Flow.Select(phase => phase.Order), phases.Select(phase => phase.Order));
+        Assert.Equal(StandardLessonFlow.Id, StandardLessonFlow.Create(language).Id);
+
+        const string custom = "[{\"name\":\"Custom activity\",\"durationMinutes\":10,\"order\":1}]";
+        Assert.Equal("Custom activity", GenerationService.ResolvePhases(null, custom, language).Single().Name);
+    }
+
     [Fact]
     public void RegenerationSnapshotRequiresBoundedSourceAndExactPhases()
     {

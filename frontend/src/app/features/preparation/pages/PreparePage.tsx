@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { displayedPhaseName } from "@/app/features/presets/standardFlow";
 import { MaterialUpload } from "../components/MaterialUpload";
 import {
   BookOpen,
@@ -203,7 +204,7 @@ export default function PreparePage() {
                 <span className="phase-index">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                <strong>{phase.name}</strong>
+                <strong>{displayedPhaseName(selectedPreset, phase, sourceLanguage)}</strong>
                 <span>
                   {phase.durationMinutes} {t.minutes}
                 </span>

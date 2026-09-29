@@ -9,6 +9,8 @@ import {
 import { blankPreset } from "@/app/shared/data/workspace";
 import { presetSchema } from "@/app/shared/schemas/domain";
 import type { Phase, Preset } from "@/app/shared/schemas/domain";
+import { starterPhases } from "@/app/features/presets/standardFlow";
+import { useSettings } from "./settings";
 import { useAlerts } from "./alerts";
 import { useI18n } from "./i18n";
 
@@ -23,6 +25,7 @@ export function usePresetsState() {
     staleTime: Infinity,
   });
   const { setError, setNotice } = useAlerts();
+  const { settings } = useSettings();
   const t = useI18n();
   useEffect(() => {
     if (warning) setNotice(warning);
@@ -49,7 +52,7 @@ export function usePresetsState() {
   }
   function createPreset() {
     if (!defaultPreset) return;
-    setDraftPreset(blankPreset(defaultPreset.phases));
+    setDraftPreset(blankPreset(starterPhases(defaultPreset, settings.displayLanguage)));
     setError("");
   }
   function duplicate(preset: Preset) {
@@ -58,7 +61,7 @@ export function usePresetsState() {
       id: crypto.randomUUID(),
       isDefault: false,
       name: `${preset.name} copy`,
-      phases: preset.phases.map((p) => ({ ...p })),
+      phases: starterPhases(preset, settings.displayLanguage),
     };
     updateLocalPresets([...localPresets, copy]);
     setDraftPreset(copy);

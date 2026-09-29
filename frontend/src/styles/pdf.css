@@ -1,0 +1,71 @@
+.lesson-result.pdf-export {
+  width: 178mm;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #20212a;
+  font:
+    10.5pt/1.45 Arial,
+    sans-serif;
+}
+.pdf-export .result-hero {
+  background: #f0ecff;
+  border: 1px solid #dcd4ff;
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin: 0 0 14px;
+}
+.pdf-export .result-hero h2 {
+  font-size: 22pt;
+}
+.pdf-export .result-summary,
+.pdf-export .activity-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pdf-export .result-summary {
+  margin-bottom: 14px;
+}
+.pdf-export .panel {
+  padding: 13px;
+  border: 1px solid #dfe1e7;
+  border-radius: 8px;
+  box-shadow: none;
+  break-inside: avoid;
+}
+.pdf-export h3 {
+  font-size: 12pt;
+}
+.pdf-export .lesson-timeline {
+  display: block;
+}
+.pdf-export .timeline-item {
+  padding-inline-start: 0;
+  margin-bottom: 10px;
+}
+.pdf-export .timeline-dot {
+  display: none;
+}
+.pdf-export .timeline-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid #e6e3f2;
+  padding-bottom: 5px;
+  margin-bottom: 7px;
+}
+.pdf-export h2,
+.pdf-export h3,
+.pdf-export h4 {
+  break-after: avoid;
+}
+.pdf-export li {
+  break-inside: avoid;
+}
+.pdf-export ul {
+  padding-inline-start: 20px;
+}
+.pdf-export .teacher-notes {
+  margin-top: 10px;
+}

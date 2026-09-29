@@ -25,6 +25,7 @@ export default function ResultsPage() {
     liveDraft,
     cancel,
     exportSelectedPdf,
+    downloading,
   } = model;
   return (
     <div className="page-content">
@@ -42,10 +43,11 @@ export default function ResultsPage() {
           {activeVariant && (
             <button
               className="secondary-button"
-              disabled={busy}
+              disabled={busy || downloading}
+              aria-busy={downloading}
               onClick={exportSelectedPdf}
             >
-              <Download aria-hidden="true" size={16} />
+              {downloading ? <LoaderCircle aria-hidden="true" size={16} className="spin" /> : <Download aria-hidden="true" size={16} />}
               {t.exportPdf}
             </button>
           )}

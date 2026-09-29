@@ -13,6 +13,8 @@ Provider-specific HTTP details live behind `IAiProvider` (`Application/Contracts
 
 The settings page fetches models through `POST /lessonprep/v1.0/Ai/providers/{provider}/models` with `X-Provider-Token`. TanStack Query considers a list fresh for five minutes; explicit refresh fetches it again. Caches are scoped to provider and an opaque credential revision, and are cancelled/removed on credential changes. Generation independently checks the selected model against a fresh provider model list. If it has disappeared, generation fails and asks the teacher to choose a current model. Eligibility filtering is provider-specific because the provider model APIs expose different capability information. The table describes the checked-in adapters, not a guarantee that every upstream service supports every endpoint or model.
 
+The standard lesson flow keeps one stable preset ID and the same five durations. The backend resolves its phase names in `sourceLanguage` (English, Arabic, or French) when generation starts, so the preparation snapshot and regeneration use the selected language. The frontend translates the standard flow preview and starters; it does not rewrite the cached backend preset. Custom flow names remain user-editable and are translated by the AI according to the generation-language instruction.
+
 All adapters implement the same interface for model listing, streamed structured lesson JSON, long-source chunk summaries, tool schema translation, and tool-call parsing. Function tools are a shared future-facing contract; the current lesson workflow does not execute application tools.
 
 ## Validation and variants

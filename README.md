@@ -40,7 +40,7 @@ See the [documentation index](docs/README.md) for architecture, OCR, provider, h
 - The API returns the bounded normalized source and phase snapshot in the `preparation` SSE event. React saves the latest snapshot and validated alternatives in that browser's local storage. Regeneration posts the saved snapshot back to the stateless API with the provider/model currently selected in Settings.
 - Provider keys are sent once over HTTPS to `POST /lessonprep/v1.0/Ai/credentials`. The API returns a JWE credential token (`dir` + `A256GCM`) that the browser stores and reuses. The API decrypts tokens only in memory for provider requests and does not save credentials. Rotating `Crypto:TokenSecret` requires users to enter keys again.
 - The API validates class, duration, phase names/order/durations, and required lesson fields before a `variant_ready` event. Provisional text deltas are discarded if a stream fails or is cancelled.
-- In Results, select an alternative and choose **Export PDF** to print that lesson alone to a paginated A4 PDF. Use the browser's **Save as PDF** destination; the filename starts from the lesson title.
+- In Results, select an alternative and choose **Export PDF** to download that lesson alone as a paginated A4 PDF named `result_<number>_<timestamp>.pdf`. Your browser's download settings determine where the file is saved.
 
 ## API
 

@@ -10,7 +10,7 @@ LessonPrep uses React, TypeScript, Vite, React Router, TanStack Query, and Zod. 
 | `app/features/preparation/` | Upload form, request schemas/adapters, generation reducer |
 | `app/features/presets/` | Lesson-flow list and phase editor |
 | `app/features/settings/` | Display language, credentials, provider/model selection |
-| `app/features/results/` | Alternative selection, lesson display, PDF printing |
+| `app/features/results/` | Alternative selection, lesson display, PDF downloads |
 | `app/providers/` | Query client, shared alerts, settings, translations, presets, preparation state |
 | `app/routes/AppRoutes.tsx` | Lazy page imports, loading fallback, redirects |
 | `app/shell/` | Sidebar navigation, topbar, shared alerts, page outlet |
@@ -47,7 +47,7 @@ The two transport classes perform no requests or assertions during module import
 
 Display language is English or Arabic; Arabic sets the document language and RTL direction. Source/output language is independently English, Arabic, or French. Existing responsive layouts, logos, and CSS classes are retained. Controls have labels, inline form errors, visible keyboard focus, a skip link, and reduced-motion styles.
 
-Results displays the selected validated lesson. Export PDF invokes browser printing; print CSS hides navigation, controls, status, and provisional text, formats the lesson for A4, and handles page breaks. `usePrintLesson` temporarily sets a sanitized lesson title for the suggested filename and restores the document title afterward. PDF creation depends on the browser's Save as PDF destination.
+Results displays the selected validated lesson. Export PDF downloads an A4 PDF directly using the lazily loaded `html2pdf.js` library, with the filename `result_<variantNumber>_<UTC timestamp>.pdf`. `useDownloadLesson` prevents concurrent exports and reports failures; `downloadLessonPdf` snapshots only the selected lesson and uses scoped PDF styles and page-break rules. Browser-rendered text preserves Arabic shaping and layout; the PDF contains rendered images rather than searchable text. Browser download preferences determine the destination and may still prompt for a location. Native browser printing remains supported by the print stylesheet.
 
 ## Checks
 
