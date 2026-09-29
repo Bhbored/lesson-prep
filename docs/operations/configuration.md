@@ -13,7 +13,7 @@ ASP.NET Core reads standard JSON configuration and environment variables. Enviro
 | `ASPNETCORE_ENVIRONMENT` | ASP.NET environment | `Development` from local launch profile |
 | `ASPNETCORE_URLS` | Kestrel bind URL(s) when set by the host | HTTPS launch profile uses `https://localhost:7132;http://localhost:5132` |
 | `ReverseProxy__TrustAll` | Trust changing managed-ingress addresses; opt in only behind controlled ingress | `false` |
-| `ReverseProxy__ClientIpHeader` | Client IP header consumed by forwarding middleware | `X-Forwarded-For`; Render Blueprint sets `CF-Connecting-IP` |
+| `ReverseProxy__ClientIpHeader` | Client IP header consumed by forwarding middleware | `X-Forwarded-For`; set `CF-Connecting-IP` on Render |
 | `ReverseProxy__KnownProxies__0` | Additional trusted proxy IP (use `__1`, etc.) | None beyond framework loopback defaults |
 | `ReverseProxy__KnownNetworks__0` | Additional trusted proxy CIDR (use `__1`, etc.) | None beyond framework defaults |
 | `PORT` | Container HTTP port; Render supplies it | `10000` in the Docker entrypoint |
