@@ -16,7 +16,7 @@ The token protects the key at rest in local storage from casual inspection, but 
 
 - No authentication or authorization exists. Anyone who can call generation with their own credential can trigger provider requests. Saved preparations are kept only in the teacher's browser; the API has no preparation read endpoint.
 - There are no per-user quotas, abuse throttles, or ownership rules.
-- OCR has no authentication and is intended to be reachable only on the private application network. Do not publish port 8001 to the internet.
+- OCR executes native code inside the API process. Keep native packages updated and provision memory/CPU for scanned documents; models are embedded and require no runtime downloads.
 - Browser local storage contains source material and validated lessons. Anyone with access to that browser profile can read them, and clearing browser data removes them.
 - Logs include operational request information. Continue to avoid logging credentials, complete source material, or provider prompts containing uploaded material.
 

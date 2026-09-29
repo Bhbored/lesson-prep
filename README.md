@@ -1,6 +1,6 @@
 # LessonPrep
 
-LessonPrep turns uploaded teaching material into 1–3 structured classroom lesson alternatives. It has three runtime components: a React frontend, an ASP.NET Core API, and a small Python PaddleOCR service. **No database is required.** The standard lesson flow is defined in code; browser local storage holds custom presets, server-issued credential tokens, and the latest preparation/source snapshot for regeneration.
+LessonPrep turns uploaded teaching material into 1–3 structured classroom lesson alternatives. It has two runtime components: a React frontend and an ASP.NET Core API with in-process PaddleOCR. **No database is required.** The standard lesson flow is defined in code; browser local storage holds custom presets, server-issued credential tokens, and the latest preparation/source snapshot for regeneration.
 
 See the [documentation index](docs/README.md) for architecture, OCR, provider, hosting, and storage details.
 
@@ -8,23 +8,12 @@ See the [documentation index](docs/README.md) for architecture, OCR, provider, h
 
 - .NET 10 SDK
 - Node.js 20.19+ or 22.12+ and npm
-- Python 3.12 for the OCR service; its dependencies are pinned in `ocr-service/requirements.txt`
+- Windows x64 or Linux x64 for native PaddleOCR (models are embedded and work offline)
 - A personal API key for at least one of OpenAI, Gemini, Anthropic, or DeepSeek to generate lessons
 
 ## Start locally
 
-1. Start OCR in its own Python environment:
-
-   ```powershell
-   py -3.12 -m venv ocr-service/.venv
-   ocr-service/.venv/Scripts/python.exe -m pip install -r ocr-service/requirements.txt
-   cd ocr-service
-   .venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8001
-   ```
-
-   The first start loads/downloads the English, Arabic, and French PP-OCRv5 mobile recognition models.
-
-2. Start the API in another shell:
+1. Start the API in another shell:
 
    ```powershell
    cd backend/LessonPrep.Api
@@ -33,7 +22,7 @@ See the [documentation index](docs/README.md) for architecture, OCR, provider, h
 
    The development profile listens on `http://localhost:5132`. `appsettings.Development.json` supplies a local `Crypto:TokenSecret` for credential tokens.
 
-3. Start React in another shell:
+2. Start React in another shell:
 
    ```powershell
    cd frontend
@@ -46,7 +35,7 @@ See the [documentation index](docs/README.md) for architecture, OCR, provider, h
 ## Workflow and storage
 
 - `Standard 45-Minute Lesson` is returned from `StandardLessonFlow.cs`, with Warm-up 5, Instruction 15, Practice 15, Assessment 7, and Closure 3 minutes. It is read-only in React. Custom flows are editable in that browser's local storage.
-- TXT and CSV are parsed directly. Each PDF page uses native text when adequate; scanned/weak-text pages are rendered and sent to the private OCR service. Uploads are not saved as files.
+- TXT and CSV are parsed directly. Each PDF page uses native text when adequate; scanned/weak-text pages are rendered and recognized inside the API. Uploads are not saved as files.
 - Class selection is a required dropdown covering Kindergarten 1–3 and Grades 1–12. Source/output language can be English, Arabic, or French; French OCR uses the PaddleOCR Latin recognition model.
 - The API returns the bounded normalized source and phase snapshot in the `preparation` SSE event. React saves the latest snapshot and validated alternatives in that browser's local storage. Regeneration posts the saved snapshot back to the stateless API with the provider/model currently selected in Settings.
 - Provider keys are sent once over HTTPS to `POST /lessonprep/v1.0/Ai/credentials`. The API returns a JWE credential token (`dir` + `A256GCM`) that the browser stores and reuses. The API decrypts tokens only in memory for provider requests and does not save credentials. Rotating `Crypto:TokenSecret` requires users to enter keys again.
@@ -74,7 +63,12 @@ A preparation accepts 1–5 files, at most 20 MiB each and 60 PDF pages total. N
 
 ```powershell
 dotnet test backend/LessonPrep.slnx
+npm test --prefix frontend
+npm run typecheck --prefix frontend
+npm run lint --prefix frontend
 npm run build --prefix frontend
 ```
 
-With the API running, `node scripts/api-smoke.mjs` checks the static preset, upload, SSE snapshot, and stateless regeneration request without a paid AI call. Set `CHECK_PDF=1` to exercise scanned-page OCR through the running OCR service, or `CHECK_KEY_DECRYPT=1` to send an intentionally invalid test key to DeepSeek's model list endpoint. `ocr-service/smoke_test.py` checks English and Arabic OCR against the running service. Real lesson generation needs the teacher's provider key.
+Frontend tests use Vitest, React Testing Library, and jsdom. Set `$env:API_TEST_URL='http://127.0.0.1:5199'` to a running production-mode API and run `npm test --prefix frontend` to include credential issuance, TXT/scanned-PDF extraction, and empty prepared-source regeneration. These checks use invalid tokens after extraction and make no paid generation requests. Separately opt into the external DeepSeek credential-decryption check with `$env:CHECK_KEY_DECRYPT='1'`. Clear both variables afterward. Set `RUN_OCR_TESTS=1` before `dotnet test` to run the native English OCR integration test. Models initialize lazily on the first scanned page for each language.
+
+The frontend follows `src/app/{features,providers,routes,shell,shared}` with global, responsive, and print styles in `src/styles`. Root providers retain preparation forms, preset drafts, and active generation across `/prepare`, `/presets`, `/settings`, and `/results`. `ApiClient` and `SseClient` in `src/app/shared/api` provide reusable validated transport; endpoint payloads belong to feature adapters. Production hosts must provide the [SPA fallback](docs/deployment/hosting.md#network-layout) for deep links.

@@ -134,14 +134,13 @@ public static class DIContainer
     public static IServiceCollection RegisterHttpClients(this IServiceCollection services)
     {
         services.AddHttpClient("ai", client => client.Timeout = TimeSpan.FromMinutes(5));
-        services.AddHttpClient("ocr", client => client.Timeout = TimeSpan.FromMinutes(2));
         return services;
     }
 
     public static IServiceCollection RegisterServices(this IServiceCollection services)
     {
         services.AddSingleton<CredentialTokenService>();
-        services.AddScoped<IOcrService, PaddleOcrClient>();
+        services.AddSingleton<IOcrService, PaddleOcrEngine>();
         services.AddScoped<DocumentProcessor>();
         services.AddScoped<GenerationService>();
         services.AddScoped<IAiProvider, OpenAiProvider>();

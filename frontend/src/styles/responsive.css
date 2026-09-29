@@ -1,0 +1,127 @@
+@media (max-width: 1050px) {
+  .main-content {
+    padding-inline: 25px;
+  }
+  .sidebar {
+    width: 205px;
+    flex-basis: 205px;
+  }
+  .hero-art {
+    width: 170px;
+  }
+  .phase-preview {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .key-section {
+    grid-template-columns: 1fr;
+  }
+  .key-actions {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 750px) {
+  .app-shell {
+    display: block;
+  }
+  .sidebar {
+    position: static;
+    height: auto;
+    width: 100%;
+    padding: 12px 16px;
+    display: block;
+    border-inline-end: 0;
+    border-bottom: 1px solid #e9ebef;
+  }
+  .brand {
+    padding: 0 0 12px;
+  }
+  .nav-caption,
+  .sidebar-footer {
+    display: none;
+  }
+  .sidebar nav {
+    display: flex;
+    overflow: auto;
+  }
+  .nav-item {
+    width: auto;
+    flex: 0 0 auto;
+    padding: 9px 10px;
+    font-size: 11px;
+    gap: 6px;
+  }
+  .nav-item svg {
+    height: 16px;
+    width: 16px;
+  }
+  .main-content {
+    padding: 0 16px 40px;
+  }
+  .topbar {
+    height: 54px;
+  }
+  .hero {
+    padding: 29px;
+    height: auto;
+    min-height: 192px;
+  }
+  .hero-art {
+    display: none;
+  }
+  .hero h1 {
+    font-size: 30px;
+  }
+  .form-grid,
+  .result-summary,
+  .activity-grid,
+  .preset-layout {
+    grid-template-columns: 1fr;
+  }
+  .panel.wide {
+    grid-column: auto;
+  }
+  .phase-preview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .provider-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .section-head {
+    align-items: start;
+  }
+  .edit-phase {
+    flex-wrap: wrap;
+  }
+  .edit-phase input:first-of-type {
+    min-width: 120px;
+  }
+  .detail-head {
+    flex-wrap: wrap;
+  }
+  .settings-panel {
+    max-width: none;
+  }
+}
+@media (max-width: 430px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+  .phase-preview {
+    grid-template-columns: 1fr 1fr;
+  }
+  .phase-chip {
+    min-height: 75px;
+  }
+  .topbar-right {
+    gap: 7px;
+  }
+  .provider-pill {
+    font-size: 0;
+  }
+  .provider-pill img {
+    margin: 0;
+  }
+  .sidebar .brand span {
+    display: none;
+  }
+}

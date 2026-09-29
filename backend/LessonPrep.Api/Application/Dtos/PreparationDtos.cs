@@ -10,7 +10,7 @@ public sealed record PreparationSnapshot(
     [Required, AllowedValues("en", "ar", "fr")] string SourceLanguage,
     [Required, MinLength(1), MaxLength(12)] List<PhaseSpec> Phases,
     [Required, StringLength(200_000, MinimumLength = 30)] string SourceText,
-    [Required, StringLength(60_000)] string PreparedSourceText);
+    [Required(AllowEmptyStrings = true), StringLength(60_000)] string PreparedSourceText);
 
 public sealed record RegenerateRequest(
     [Required] PreparationSnapshot Snapshot,

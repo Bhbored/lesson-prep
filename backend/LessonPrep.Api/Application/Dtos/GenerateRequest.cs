@@ -1,5 +1,4 @@
 using LessonPrep.Api.Application.Enums;
-using Microsoft.AspNetCore.Http;
 
 namespace LessonPrep.Api.Application.Dtos;
 

@@ -6,22 +6,18 @@ The document pipeline lives under `backend/LessonPrep.Api/Helpers/documents/`:
 - `CsvToText.cs` — CSV parsing into labeled text.
 - `PdfToText.cs` — PdfPig native text and PDFtoImage rendering for weak pages.
 
-OCR HTTP calls go through `backend/LessonPrep.Api/Infrastructure/OCR/PaddleOcrClient.cs`. ASP.NET owns file validation, PDF parsing, page rendering, and text normalization. Python only receives rendered images and returns OCR text.
+OCR runs inside `backend/LessonPrep.Api/Infrastructure/OCR/PaddleOcrEngine.cs`, a singleton implementing the unchanged `IOcrService` contract. ASP.NET owns validation, parsing, rendering, recognition, and normalization.
 
 ## File flow
 
 - **TXT:** Read as strict UTF-8, then normalize whitespace and control characters while retaining paragraph breaks.
 - **CSV:** Parse with CsvHelper so quoted commas and multiline cells are handled. Convert each row into labeled text fields.
 - **PDF:** Verify the PDF signature and extract each page's native text with PdfPig. A page is considered usable when it has at least 40 letters/digits and few replacement characters.
-- **Weak-text PDF page:** Render that page to a 220 DPI PNG using PDFtoImage, then POST the image and language to FastAPI's `/api/ocr` endpoint.
+- **Weak-text PDF page:** Render that page to a 220 DPI PNG using PDFtoImage, then decode the image with OpenCvSharp and queue native PaddleOCR inference.
 
-The OCR service loads English, Arabic, and French PaddleOCR engines on startup. English uses `en_PP-OCRv5_mobile_rec`, Arabic uses `arabic_PP-OCRv5_mobile_rec`, and French uses `latin_PP-OCRv5_mobile_rec`. It validates the image and size, serializes calls per language engine, and returns recognized text. The API restores page order and combines OCR/native text before returning the normalized source to the browser. File uploads are not persisted as files.
+The engine lazily creates a `QueuedPaddleOcrAll` per language. English uses `LocalFullModels.EnglishV5`, Arabic uses `ArabicV5`, and French uses `LatinV5`, with the PP-OCRv5 detector. Models are embedded and work offline. Each queue has `Ocr:WorkerCount` workers (environment variable `Ocr__WorkerCount`, default 1); increasing it creates additional model instances and consumes more memory. Rotation detection is enabled, 180-degree classification is disabled, and the MKL-DNN shape cache capacity is 1 to limit memory for varying page sizes.
 
-## Service boundary
-
-The API uses `OcrService:BaseUrl` (environment variable `OcrService__BaseUrl`) and appends `/api/ocr`. The service has `GET /health`, returning `{"ready":true}` after the English, Arabic, and French OCR engines are loaded. The OCR HTTP timeout is two minutes.
-
-Keep the OCR endpoint on a private network and allow only the ASP.NET service to call it. It has no application authentication because the intended deployment boundary is the private service network. Do not expose it directly to the public internet.
+The API preserves page order and combines native and OCR text. Uploads are not persisted. Request cancellation stops queued work; a native run already in progress finishes before its image is disposed. Created queues and models are disposed at API shutdown.
 
 ## Language and limits
 
@@ -29,6 +25,8 @@ The UI's source language selection (`en`, `ar`, or `fr`) determines which OCR en
 
 Scanned-document quality depends on scan resolution, page rotation, contrast, handwriting, and layout. OCR output is not a verified transcription; teachers should review the generated lesson against their original material.
 
-## PaddleOCR package versus source folder
+## Native deployment
 
-`ocr-service/requirements.txt` pins `paddleocr==3.3.2` and `paddlepaddle==3.2.2`. `ocr-service/app/main.py` imports `PaddleOCR` from that installed package. The repository's `PaddleOCR/paddleocr/` checkout is not imported, copied into the service, or needed on the server. The OCR service also needs the runtime's PaddleOCR model files; first startup downloads them if no local model cache exists.
+Sdcb.PaddleOCR and Models.Local are pinned to 3.3.1; Paddle Inference runtimes to 3.3.1.70. LocalV5 is explicitly pinned to 3.3.1 because the Local package otherwise resolves the incomplete 3.0.0 model bundle. OpenCvSharp managed and native versions match at 4.11.0.20250507. OpenCV 4.13 changes rotated rectangle conventions and is incompatible with PaddleOCR 3.3.1 rotation handling. Windows x64 and Linux x64 runtimes are selected by publish RID, or by build host when no RID is set. The `PaddleOCR/` checkout is reference material and is not needed on the server.
+
+Publish Linux with `dotnet publish backend/LessonPrep.Api -c Release -r linux-x64 --self-contained false`. Use a glibc-based Debian/Ubuntu host rather than Alpine. OpenCvSharp requires GTK3, GLib, FreeType, HarfBuzz, and their dependencies even for headless OCR. Install the matching distribution packages (for example `libgtk-3-0` and `libharfbuzz0b` on Debian 12), then check native shared-library dependencies on the deployment image and run a scanned-PDF smoke test there.

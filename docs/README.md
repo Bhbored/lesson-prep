@@ -15,8 +15,8 @@ Start here if you are new to the repository. The root [README](../README.md) is 
 
 ## Which backend do I host?
 
-Host the ASP.NET Core API as the main application backend. Also run the Python OCR service as a separate internal service because the API calls it to read scanned PDF pages. Build and host the React frontend as static files, preferably behind the same HTTPS origin as the API. No database is used or hosted.
+Host the ASP.NET Core API, which reads scanned PDF pages with in-process PaddleOCR. Build and host the React frontend as static files, preferably behind the same HTTPS origin as the API. No database is used or hosted.
 
-The existing `PaddleOCR/paddleocr/` source checkout is not imported or launched by this app. The Python OCR service uses the published `paddleocr` package pinned in `ocr-service/requirements.txt`; its package installation downloads/uses PaddleOCR model weights. You do not need to deploy the checkout folder.
+The `PaddleOCR/` source checkout is reference material. Models and native libraries come from NuGet; the checkout is not deployed.
 
 See [Hosting and deployment](deployment/hosting.md) before exposing this MVP to the internet. The current app has no user authentication or authorization.
