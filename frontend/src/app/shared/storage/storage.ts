@@ -50,7 +50,10 @@ function migrateSettings(raw: unknown): Settings {
     if (Object.hasOwn(aliases, name) && typeof model === "string")
       models[aliases[name]] = model;
   return settingsSchema.parse({
-    displayLanguage: value.displayLanguage === "ar" ? "ar" : "en",
+    displayLanguage:
+      value.displayLanguage === "ar" || value.displayLanguage === "fr"
+        ? value.displayLanguage
+        : "en",
     provider:
       typeof value.provider === "string" &&
       Object.hasOwn(aliases, value.provider)

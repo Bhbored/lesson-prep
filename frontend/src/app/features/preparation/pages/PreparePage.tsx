@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { displayedPhaseName } from "@/app/features/presets/standardFlow";
+import { displayedPhaseName, displayedPresetName } from "@/app/features/presets/standardFlow";
 import { MaterialUpload } from "../components/MaterialUpload";
 import {
   BookOpen,
@@ -82,14 +82,10 @@ export default function PreparePage() {
                 onChange={(event) => setClassName(event.target.value)}
                 required
               >
-                <option value="">
-                  {settings.displayLanguage === "ar"
-                    ? "اختر صفًا"
-                    : "Select a class"}
-                </option>
+                <option value="">{t.selectClass}</option>
                 {classChoices.map((choice) => (
                   <option key={choice.value} value={choice.value}>
-                    {settings.displayLanguage === "ar" ? choice.ar : choice.en}
+                    {choice[settings.displayLanguage]}
                   </option>
                 ))}
               </select>
@@ -133,9 +129,7 @@ export default function PreparePage() {
             >
               <option value="en">{t.english}</option>
               <option value="ar">{t.arabic}</option>
-              <option value="fr">
-                {settings.displayLanguage === "ar" ? "الفرنسية" : "French"}
-              </option>
+              <option value="fr">{t.french}</option>
             </select>
           </label>
         </section>
@@ -185,7 +179,7 @@ export default function PreparePage() {
             >
               {allPresets.map((preset) => (
                 <option value={preset.id} key={preset.id}>
-                  {preset.name}
+                  {displayedPresetName(preset, settings.displayLanguage)}
                 </option>
               ))}
             </select>

@@ -9,7 +9,7 @@ import {
 import { blankPreset } from "@/app/shared/data/workspace";
 import { presetSchema } from "@/app/shared/schemas/domain";
 import type { Phase, Preset } from "@/app/shared/schemas/domain";
-import { starterPhases } from "@/app/features/presets/standardFlow";
+import { displayedPresetName, starterPhases } from "@/app/features/presets/standardFlow";
 import { useSettings } from "./settings";
 import { useAlerts } from "./alerts";
 import { useI18n } from "./i18n";
@@ -60,7 +60,7 @@ export function usePresetsState() {
       ...preset,
       id: crypto.randomUUID(),
       isDefault: false,
-      name: `${preset.name} copy`,
+      name: `${displayedPresetName(preset, settings.displayLanguage)} ${t.copySuffix}`,
       phases: starterPhases(preset, settings.displayLanguage),
     };
     updateLocalPresets([...localPresets, copy]);

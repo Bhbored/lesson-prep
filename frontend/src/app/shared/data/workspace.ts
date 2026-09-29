@@ -17,12 +17,13 @@ export const blankPreset = (phases: Preset["phases"]): Preset => ({
   phases: phases.map((phase) => ({ ...phase })),
 });
 export const classChoices = [
-  { value: "Kindergarten 1", en: "Kindergarten 1", ar: "الروضة الأولى" },
-  { value: "Kindergarten 2", en: "Kindergarten 2", ar: "الروضة الثانية" },
-  { value: "Kindergarten 3", en: "Kindergarten 3", ar: "الروضة الثالثة" },
+  { value: "Kindergarten 1", en: "Kindergarten 1", ar: "الروضة الأولى", fr: "Maternelle 1" },
+  { value: "Kindergarten 2", en: "Kindergarten 2", ar: "الروضة الثانية", fr: "Maternelle 2" },
+  { value: "Kindergarten 3", en: "Kindergarten 3", ar: "الروضة الثالثة", fr: "Maternelle 3" },
   ...Array.from({ length: 12 }, (_, index) => ({
     value: `Grade ${index + 1}`,
     en: `Grade ${index + 1}`,
     ar: `الصف ${index + 1}`,
+    fr: `Classe ${index + 1}`,
   })),
 ];

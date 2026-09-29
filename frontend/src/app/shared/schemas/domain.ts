@@ -108,7 +108,7 @@ export const credentialSchema = z
   .string()
   .regex(/^[\w-]+\.\.[\w-]+\.[\w-]+\.[\w-]+$/);
 export const settingsSchema = z.object({
-  displayLanguage: z.enum(["en", "ar"]),
+  displayLanguage: languageSchema,
   provider: providerSchema,
   keys: z.partialRecord(providerSchema, credentialSchema),
   models: z.partialRecord(providerSchema, z.string()),

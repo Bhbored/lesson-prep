@@ -1,12 +1,13 @@
 import { expect, it } from "vitest";
 import { preset } from "@/test/fixtures";
-import { displayedPhaseName, starterPhases } from "./standardFlow";
+import { displayedPhaseName, displayedPresetName, starterPhases } from "./standardFlow";
 
 it("localizes the standard flow preview and starter without changing the server preset", () => {
   expect(preset.phases.map((phase) => displayedPhaseName(preset, phase, "ar")))
     .toEqual(["تمهيد", "شرح الدرس", "تطبيق", "تقييم", "خاتمة"]);
   expect(preset.phases.map((phase) => displayedPhaseName(preset, phase, "fr")))
     .toEqual(["Mise en route", "Enseignement", "Mise en pratique", "Évaluation", "Conclusion"]);
+  expect(displayedPresetName(preset, "fr")).toBe("Cours standard de 45 minutes");
 
   const starter = starterPhases(preset, "ar");
   starter[0].name = "Edited introduction";

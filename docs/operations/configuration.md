@@ -45,7 +45,7 @@ Serilog writes to the console and a Seq sink at `http://localhost:5341` in base 
 - 200,000 characters maximum normalized source text.
 - Lesson duration 10–240 minutes; 1–12 phases with contiguous orders, names up to 80 characters, positive durations, and a total matching the lesson duration.
 - Class name up to 100 characters; model ID up to 150; generation round 1–10,000.
-- Source languages `en`, `ar`, and `fr`; frontend display languages `en` and `ar`.
+- Source and frontend display languages `en`, `ar`, and `fr`.
 - Sources over 80,000 characters are summarized in chunks of at most 20,000 characters; each summary is at most 6,000 characters and the combined prepared source at most 60,000. An empty prepared-source string is valid and means the original source is used or summarized as needed.
 - OCR input is capped at 15 MiB and 30 million pixels per page.
 - At most 3 alternatives, with an AI JSON response capped at 100,000 characters and one corrective retry for invalid output. This backend retry is separate from frontend read retries; generation requests are never automatically retried by the frontend.

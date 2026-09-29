@@ -13,7 +13,7 @@ function Navigation({ mobile }: Readonly<{ mobile: boolean }>) {
     { currentVariants } = usePreparation();
   return (
     <nav
-      aria-label="Main navigation"
+      aria-label={t.mainNavigation}
       className={mobile
         ? "fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 gap-1 border-t border-line bg-paper px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:hidden"
         : "hidden gap-1 md:grid"}

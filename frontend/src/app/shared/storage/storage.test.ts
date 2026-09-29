@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  defaultSettings,
   loadPreparation,
   loadPresets,
   loadSettings,
@@ -24,6 +25,13 @@ describe("browser storage", () => {
       keys: { deepSeek: token },
       models: { deepSeek: "model" },
     });
+  });
+  it("preserves French as the saved display language", () => {
+    localStorage.setItem(
+      storageKeys.settings,
+      JSON.stringify({ ...defaultSettings, displayLanguage: "fr" }),
+    );
+    expect(loadSettings().value.displayLanguage).toBe("fr");
   });
   it("restores current preparation snapshots and custom presets", () => {
     localStorage.setItem(

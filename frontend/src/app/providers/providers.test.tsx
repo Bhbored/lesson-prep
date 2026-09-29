@@ -16,6 +16,7 @@ import {
 } from "@tanstack/react-query";
 import { AlertsProvider } from "./AlertsProvider";
 import { SettingsProvider } from "./SettingsProvider";
+import { I18nProvider } from "./I18nProvider";
 import { PresetsProvider } from "./PresetsProvider";
 import { PreparationProvider } from "./PreparationProvider";
 import { usePreparation } from "./preparation";
@@ -60,9 +61,11 @@ function Wrapper({ children }: Readonly<{ children: ReactNode }>) {
       <QueryClientProvider client={client}>
         <AlertsProvider>
           <SettingsProvider>
-            <PresetsProvider>
-              <PreparationProvider>{children}</PreparationProvider>
-            </PresetsProvider>
+            <I18nProvider>
+              <PresetsProvider>
+                <PreparationProvider>{children}</PreparationProvider>
+              </PresetsProvider>
+            </I18nProvider>
           </SettingsProvider>
         </AlertsProvider>
       </QueryClientProvider>
@@ -84,6 +87,21 @@ beforeEach(() => {
 afterEach(() => vi.resetAllMocks());
 
 describe("settings and model caches", () => {
+  it("switches to French and restores the French interface after remount", async () => {
+    const user = userEvent.setup();
+    const view = render(<SettingsPage />, { wrapper: Wrapper });
+    await user.click(screen.getByRole("button", { name: "French" }));
+    expect(screen.getByRole("heading", { name: "Paramètres" })).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute("lang", "fr");
+    expect(document.documentElement).toHaveAttribute("dir", "ltr");
+    expect(loadSettings().value.displayLanguage).toBe("fr");
+    view.unmount();
+    render(<PreparePage />, { wrapper: Wrapper });
+    await waitFor(() =>
+      expect(screen.getByRole("option", { name: "Cours standard de 45 minutes" })).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("option", { name: "Maternelle 1" })).toBeInTheDocument();
+  });
   it("removes the selected provider credential and model from local storage when Remove key is clicked", async () => {
     const otherToken = "other..nonce.encrypted.signature";
     localStorage.setItem(

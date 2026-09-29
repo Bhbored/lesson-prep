@@ -8,7 +8,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { usePresetsPage } from "@/app/features/presets/hooks/usePresetsPage";
-import { displayedPhaseName } from "@/app/features/presets/standardFlow";
+import { displayedPhaseName, displayedPresetDescription, displayedPresetName } from "@/app/features/presets/standardFlow";
 export default function PresetsPage() {
   const model = usePresetsPage();
   const {
@@ -60,7 +60,7 @@ export default function PresetsPage() {
                 <BookOpen aria-hidden="true" size={19} />
               </div>
               <div className="min-w-0 flex-1">
-                <strong className="block truncate text-xs">{preset.name}</strong>
+                <strong className="block truncate text-xs">{displayedPresetName(preset, displayLanguage)}</strong>
                 <span className="text-xs text-muted">
                   {preset.isDefault ? t.standard : t.local} ·{" "}
                   {preset.phases.reduce(
@@ -141,8 +141,8 @@ export default function PresetsPage() {
                   <span className="eyebrow text-[11px] font-bold tracking-[0.14em] text-leaf-700 uppercase">
                     {selectedPreset.isDefault ? t.standard : t.local}
                   </span>
-                  <h2 className="mt-2 font-display text-2xl font-semibold">{selectedPreset.name}</h2>
-                  <p className="mt-1 text-xs text-muted">{selectedPreset.description}</p>
+                  <h2 className="mt-2 font-display text-2xl font-semibold">{displayedPresetName(selectedPreset, displayLanguage)}</h2>
+                  <p className="mt-1 text-xs text-muted">{displayedPresetDescription(selectedPreset, displayLanguage)}</p>
                 </div>
                 <div className="detail-buttons flex flex-wrap gap-2">
                   <button

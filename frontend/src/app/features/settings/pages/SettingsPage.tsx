@@ -23,14 +23,14 @@ export default function SettingsPage() {
             <p className="mt-0.5 text-xs text-muted">{t.displayHelp}</p>
           </div>
         </div>
-        <div className="segmented language-segment flex gap-2">
+        <div className="segmented language-segment flex flex-wrap gap-2">
           <button
             className={`min-h-11 rounded-lg border px-5 font-semibold ${settings.displayLanguage === "en" ? "selected border-leaf-300 bg-leaf-100 text-leaf-800" : "border-line bg-white text-muted"}`}
             onClick={() =>
               updateSettings({ ...settings, displayLanguage: "en" })
             }
           >
-            English
+            {t.english}
           </button>
           <button
             className={`min-h-11 rounded-lg border px-5 font-semibold ${settings.displayLanguage === "ar" ? "selected border-leaf-300 bg-leaf-100 text-leaf-800" : "border-line bg-white text-muted"}`}
@@ -38,7 +38,15 @@ export default function SettingsPage() {
               updateSettings({ ...settings, displayLanguage: "ar" })
             }
           >
-            العربية
+            {t.arabic}
+          </button>
+          <button
+            className={`min-h-11 rounded-lg border px-5 font-semibold ${settings.displayLanguage === "fr" ? "selected border-leaf-300 bg-leaf-100 text-leaf-800" : "border-line bg-white text-muted"}`}
+            onClick={() =>
+              updateSettings({ ...settings, displayLanguage: "fr" })
+            }
+          >
+            {t.french}
           </button>
         </div>
       </section>

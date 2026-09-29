@@ -14,7 +14,7 @@ LessonPrep uses React, TypeScript, Vite, React Router, TanStack Query, Zod, and 
 | `app/providers/` | Query client, shared alerts, settings, translations, presets, preparation state |
 | `app/routes/AppRoutes.tsx` | Lazy page imports, loading fallback, redirects |
 | `app/shell/` | Sidebar navigation, topbar, shared alerts, page outlet |
-| `app/shared/` | Transport utilities, storage, schemas/types, translations, static data |
+| `app/shared/` | Transport utilities, storage, schemas/types, English, Arabic, and French JSON dictionaries, static data |
 | `styles/` | Tailwind theme tokens, global focus and reduced-motion rules, and print/PDF CSS |
 | `test/` | Vitest setup and shared fixtures |
 
@@ -45,7 +45,7 @@ The two transport classes perform no requests or assertions during module import
 
 ## Languages, accessibility, and printing
 
-Display language is English or Arabic; Arabic sets the document language and RTL direction. Source/output language is independently English, Arabic, or French. Tailwind utilities style the screens, including responsive and RTL layout. CSS remains for theme tokens, global focus and reduced-motion behavior, and print/PDF output; semantic class names on result elements provide print/PDF targets. The palette uses sage surfaces and a deep green action color; provider logos keep their own brand colors. The paper illustration and numbered lesson phases tie the visual style to classroom planning. Controls have labels, inline form errors, visible keyboard focus, a skip link, and reduced-motion styles.
+Display language is English, Arabic, or French. Interface copy lives in `app/shared/i18n/en.json`, `ar.json`, and `fr.json`, with matching keys checked by TypeScript and tests. Arabic sets the document language and RTL direction; English and French use LTR. Source/output language is independently English, Arabic, or French. Tailwind utilities style the screens, including responsive and RTL layout. CSS remains for theme tokens, global focus and reduced-motion behavior, and print/PDF output; semantic class names on result elements provide print/PDF targets. The palette uses sage surfaces and a deep green action color; provider logos keep their own brand colors. The paper illustration and numbered lesson phases tie the visual style to classroom planning. Controls have labels, inline form errors, visible keyboard focus, a skip link, and reduced-motion styles.
 
 Results displays the selected validated lesson. Export PDF downloads an A4 PDF directly using the lazily loaded `html2pdf.js` library, with the filename `result_<variantNumber>_<UTC timestamp>.pdf`. `useDownloadLesson` prevents concurrent exports and reports failures; `downloadLessonPdf` snapshots only the selected lesson and uses scoped PDF styles and page-break rules. Browser-rendered text preserves Arabic shaping and layout; the PDF contains rendered images rather than searchable text. Browser download preferences determine the destination and may still prompt for a location. Native browser printing remains supported by the print stylesheet.
 
