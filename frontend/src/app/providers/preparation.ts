@@ -62,8 +62,7 @@ export function usePreparationState() {
     [],
   );
   useEffect(() => {
-    if (!state.preparation || lastPersisted.current === state.preparation)
-      return;
+    if (lastPersisted.current === state.preparation) return;
     lastPersisted.current = state.preparation;
     const issue = saveStored(storageKeys.preparation, state.preparation);
     if (issue) setNotice(issue);

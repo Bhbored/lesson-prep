@@ -48,6 +48,7 @@ public sealed class OpenAiProvider(IHttpClientFactory factory) : AiProviderBase(
         await EnsureSuccessAsync(response, ct);
         await foreach (var (eventName, data) in ReadSseAsync(response, ct))
         {
+            if (eventName == "response.completed") yield break;
             if (eventName is "response.failed" or "response.incomplete")
                 throw new ProviderException("OpenAI did not complete the response.");
             if (eventName != "response.output_text.delta") continue;

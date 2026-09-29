@@ -1,6 +1,6 @@
 # AI providers and streaming
 
-Provider-specific HTTP details live behind `IAiProvider` (`Application/Contracts/Ai/IAiProvider.cs`) with one class per provider under `Infrastructure/Ai/` (`OpenAiProvider`, `GeminiProvider`, `AnthropicProvider`, `DeepSeekProvider`, plus shared `AiProviderBase`). The lesson prompt and JSON schema are provider-independent helpers in `Helpers/prompts/LessonPrompt.cs` and `Helpers/schemas/LessonSchema.cs`. Each adapter translates that contract to the provider's API. Providers are identified by the `AiProvider` enum (`openAi`, `gemini`, `anthropic`, `deepSeek` in JSON).
+Provider-specific HTTP details live behind `IAiProvider` (`Application/Contracts/Ai/IAiProvider.cs`) with one class per provider under `Infrastructure/Ai/` (`OpenAiProvider`, `GeminiProvider`, `AnthropicProvider`, `DeepSeekProvider`, plus shared `AiProviderBase`). The lesson prompt and JSON schema are provider-independent helpers in `Helpers/prompts/LessonPrompt.cs` and `Helpers/schemas/LessonSchema.cs`. Each adapter translates that contract to the provider's API. The frontend sends `openAi`, `gemini`, `anthropic`, or `deepSeek`; backend enum serialization emits `OpenAi`, `Gemini`, `Anthropic`, or `DeepSeek` in responses. Request enum parsing accepts these names case-insensitively.
 
 ## Current providers
 
@@ -11,15 +11,19 @@ Provider-specific HTTP details live behind `IAiProvider` (`Application/Contracts
 | Anthropic | Paged `GET /v1/models`; currently keeps Claude model IDs | Messages API with JSON schema output and content deltas |
 | DeepSeek | `GET /models`; currently keeps `deepseek-` IDs | Responses API with JSON schema output and text delta events |
 
-The model list is fetched live when the teacher loads or refreshes the model selection (`POST /lessonprep/v1.0/Ai/providers/{provider}/models` with `X-Provider-Token`). Generation checks the selected model against a fresh provider model list. If it has disappeared, generation fails and asks the teacher to choose a current model. Eligibility filtering is provider-specific because the provider model APIs expose different capability information.
+The settings page fetches models through `POST /lessonprep/v1.0/Ai/providers/{provider}/models` with `X-Provider-Token`. TanStack Query considers a list fresh for five minutes; explicit refresh fetches it again. Caches are scoped to provider and an opaque credential revision, and are cancelled/removed on credential changes. Generation independently checks the selected model against a fresh provider model list. If it has disappeared, generation fails and asks the teacher to choose a current model. Eligibility filtering is provider-specific because the provider model APIs expose different capability information. The table describes the checked-in adapters, not a guarantee that every upstream service supports every endpoint or model.
 
 All adapters implement the same interface for model listing, streamed structured lesson JSON, long-source chunk summaries, tool schema translation, and tool-call parsing. Function tools are a shared future-facing contract; the current lesson workflow does not execute application tools.
 
 ## Validation and variants
 
-One shared prompt identifies uploaded text as source material and lesson settings as configuration. It asks the provider to stay grounded in the source and return the lesson schema. The server validates required text and arrays, requested class/duration, phase count/name/order, and exact per-phase durations before saving or emitting a completed variant (`Application/Validators/LessonValidator.cs`). Invalid structured output gets one corrective retry, then the request fails.
+One shared prompt identifies uploaded text as source material and lesson settings as configuration. It asks the provider to stay grounded in the source and return the lesson schema. The server validates required text and arrays, requested class/duration, phase count, nonempty translated names, and exact durations at each phase position before saving or emitting a completed variant (`Application/Validators/LessonValidator.cs`). Invalid structured output gets one corrective retry, then the request fails.
 
 The API generates alternatives sequentially and gives later calls the earlier lesson approaches so the outputs can differ. Each validated variant is sent to React with provider ID and model ID; React saves the latest round in browser storage. Credentials are never part of a variant.
+
+The prompt requires lesson titles, headings, and all phase names (including custom flow names) in the selected generation language: English, Arabic, or French. Saved flow names and regeneration snapshots stay unchanged; results display the translated names returned by the provider. Validation requires nonempty phase names rather than exact equality with the original flow names. Translation accuracy and preservation of each phase's meaning are enforced by the prompt, not a language detector.
+
+OpenAI and DeepSeek streams stop at `response.completed`; Anthropic streams stop at `message_stop`. The adapters dispose the response immediately instead of waiting for the upstream connection to close. A transport failure while reading an unfinished stream becomes a safe `provider_error`; cancellation remains cancellation. Transport failures receive no automatic generation retry, and previously validated alternatives remain available in the frontend.
 
 ## SSE events
 
@@ -33,4 +37,6 @@ The frontend submits a streaming `fetch` POST because requests include multipart
 - `complete`: the generation round finished.
 - `error`: safe user-facing error when generation fails after streaming begins.
 
-Provisional deltas are not treated as a lesson result. React clears the draft on a failed or cancelled stream; alternatives already validated and saved remain accessible. Reverse proxies must preserve incremental responses for SSE to appear live.
+Provisional deltas are not treated as a lesson result and are never persisted. React clears the draft on variant/retry status changes, selection changes, errors, cancellation, and completion; alternatives already validated and saved remain accessible. A regeneration keeps the previous round visible until the first new validated alternative arrives, then retains only the new round. Route navigation does not cancel generation; explicit cancellation and application teardown do.
+
+The frontend `SseClient` handles split UTF-8 characters, LF/CRLF boundaries, and multiline data, ignores unknown event names, and validates known events. Malformed known events and streams that end without `complete` fail. Reader cancellation and lock release run on success, failure, and cancellation. See [API contract](api-contract.md) for event payloads and error handling. Reverse proxies must preserve incremental responses for SSE to appear live.

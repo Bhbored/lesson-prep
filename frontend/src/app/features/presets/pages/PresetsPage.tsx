@@ -12,7 +12,6 @@ export default function PresetsPage() {
   const model = usePresetsPage();
   const {
     selectedPresetId,
-    setError,
     t,
     setSelectedPresetId,
     allPresets,
@@ -24,7 +23,8 @@ export default function PresetsPage() {
     updateLocalPresets,
     duplicate,
     savePreset,
-    blankPreset,
+    createPreset,
+    canCreatePreset,
   } = model;
   return (
     <div className="page-content">
@@ -36,10 +36,8 @@ export default function PresetsPage() {
         </div>
         <button
           className="primary-button small"
-          onClick={() => {
-            setDraftPreset(blankPreset());
-            setError("");
-          }}
+          onClick={createPreset}
+          disabled={!canCreatePreset}
         >
           <CirclePlus aria-hidden="true" size={18} />
           {t.newPreset}

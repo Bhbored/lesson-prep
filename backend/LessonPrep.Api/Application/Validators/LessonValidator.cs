@@ -96,14 +96,14 @@ public static class LessonValidator
             var error = (actual[i], expected[i], i + 1) switch
             {
                 (null, _, var n) => $"phase {n} is missing",
-                var (part, spec, n) when part.Name != spec.Name
+                var (part, spec, n) when string.IsNullOrWhiteSpace(part.Name)
                                          || part.DurationMinutes != spec.DurationMinutes
                                          || string.IsNullOrWhiteSpace(part.Objective)
                                          || part.TeacherActions is not { Count: > 0 }
                                          || part.StudentActions is not { Count: > 0 }
                                          || part.TeacherActions.Any(string.IsNullOrWhiteSpace)
                                          || part.StudentActions.Any(string.IsNullOrWhiteSpace)
-                    => $"phase {n} must be named '{spec.Name}', last {spec.DurationMinutes} minutes, and include an objective plus nonempty teacher and student actions",
+                    => $"phase {n} must have a nonempty name translating '{spec.Name}' into the output language, last {spec.DurationMinutes} minutes, and include an objective plus nonempty teacher and student actions",
                 _ => null
             };
             if (error is not null) return error;

@@ -21,6 +21,7 @@ export function generationReducer(
     return {
       ...state,
       preparation: action.regenerate ? state.preparation : null,
+      activeVariantId: action.regenerate ? state.activeVariantId : "",
       busy: true,
       stage: action.regenerate ? "generating" : "extracting",
       liveDraft: "",

@@ -22,8 +22,7 @@ export class SseClient {
     };
     signal?.addEventListener("abort", abort, { once: true });
     const decoder = new TextDecoder();
-    let buffer = "",
-      complete = false;
+    let buffer = "";
     try {
       while (true) {
         signal?.throwIfAborted();
@@ -83,17 +82,14 @@ export class SseClient {
                 "invalid_response",
               );
             onEvent(result.data);
-            if (event === "complete") complete = true;
+            if (event === "complete") return;
           }
           delimiter = /\r?\n\r?\n/.exec(buffer);
         }
         if (done) break;
       }
       signal?.throwIfAborted();
-      if (!complete)
-        throw apiFailure(
-          "The lesson stream ended before generation completed.",
-        );
+      throw apiFailure("The lesson stream ended before generation completed.");
     } finally {
       signal?.removeEventListener("abort", abort);
       await reader.cancel().catch(() => {});

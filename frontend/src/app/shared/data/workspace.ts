@@ -9,12 +9,12 @@ export const logos: Record<ProviderId, string> = {
   anthropic: anthropicLogo,
   deepSeek: deepseekLogo,
 };
-export const blankPreset = (): Preset => ({
+export const blankPreset = (phases: Preset["phases"]): Preset => ({
   id: crypto.randomUUID(),
   name: "",
   description: "",
   isDefault: false,
-  phases: [{ name: "", durationMinutes: 5, order: 1 }],
+  phases: phases.map((phase) => ({ ...phase })),
 });
 export const classChoices = [
   { value: "Kindergarten 1", en: "Kindergarten 1", ar: "الروضة الأولى" },

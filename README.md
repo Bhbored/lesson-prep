@@ -17,10 +17,10 @@ See the [documentation index](docs/README.md) for architecture, OCR, provider, h
 
    ```powershell
    cd backend/LessonPrep.Api
-   dotnet run
+   dotnet run --launch-profile https
    ```
 
-   The development profile listens on `http://localhost:5132`. `appsettings.Development.json` supplies a local `Crypto:TokenSecret` for credential tokens.
+   The HTTPS development profile listens on `https://localhost:7132` and `http://localhost:5132`; HTTP requests redirect to HTTPS. `appsettings.Development.json` supplies a local `Crypto:TokenSecret` for credential tokens. Run `dotnet dev-certs https --trust` if the development certificate is not trusted.
 
 2. Start React in another shell:
 

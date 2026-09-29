@@ -65,6 +65,33 @@ public sealed class LessonTests
         Assert.Throws<LessonValidationException>(() => LessonValidator.ParseAndValidate(JsonSerializer.Serialize(changed, new JsonSerializerOptions(JsonSerializerDefaults.Web)), "Grade 7", 45, Flow));
     }
 
+    [Theory]
+    [InlineData("التمهيد", "التعليم", "التطبيق", "التقييم", "الخاتمة", "مناقشة جماعية")]
+    [InlineData("Mise en route", "Enseignement", "Pratique", "Évaluation", "Conclusion", "Discussion en groupe")]
+    public void TranslatedStandardAndCustomPhaseNamesAreAcceptedButStructureRemainsRequired(
+        string warmUp, string instruction, string practice, string assessment, string closure, string custom)
+    {
+        PhaseSpec[] flow = [.. Flow, new("Group discussion", 5, 6)];
+        string[] names = [warmUp, instruction, practice, assessment, closure, custom];
+        var lesson = new GeneratedLesson("Plants", "Photosynthesis", "Grade 7", 50, ["Explain photosynthesis"], ["Board"],
+            flow.Select((phase, i) => new LessonPhaseResult(names[i], phase.DurationMinutes, "Learn",
+                ["Explain"], ["Practice"], [], "")).ToList(), "Exit ticket", ["Students can explain"], "");
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+
+        Assert.Equal(names, LessonValidator.ParseAndValidate(JsonSerializer.Serialize(lesson, options),
+            "Grade 7", 50, flow).Phases.Select(phase => phase.Name));
+
+        foreach (var invalid in new[]
+                 {
+                     lesson with { Phases = lesson.Phases.Select((phase, i) => i == 0 ? phase with { Name = " " } : phase).ToList() },
+                     lesson with { Phases = lesson.Phases.Select((phase, i) => i == 0 ? phase with { DurationMinutes = 6 } : phase).ToList() },
+                     lesson with { Phases = lesson.Phases.Take(5).ToList() },
+                     lesson with { Phases = lesson.Phases.AsEnumerable().Reverse().ToList() }
+                 })
+            Assert.Throws<LessonValidationException>(() => LessonValidator.ParseAndValidate(
+                JsonSerializer.Serialize(invalid, options), "Grade 7", 50, flow));
+    }
+
     [Fact]
     public void CsvParserPreservesQuotedCommasAndNewlines()
     {
@@ -136,7 +163,8 @@ public sealed class LessonTests
 
         var parts = token.Split('.');
         var cipher = parts[3].ToCharArray();
-        cipher[^1] = cipher[^1] == 'A' ? 'B' : 'A';
+        // Change real ciphertext bits, not potentially unused base64 padding bits.
+        cipher[0] = cipher[0] == 'A' ? 'B' : 'A';
         parts[3] = new string(cipher);
         Assert.Throws<CredentialException>(() => tokens.Open(string.Join('.', parts), AiProvider.DeepSeek));
     }

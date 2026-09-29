@@ -1,4 +1,10 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+import {
+  act,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -17,13 +23,20 @@ import { usePresets } from "./presets";
 import { useSettings } from "./settings";
 import { useAlerts } from "./alerts";
 import { useSettingsPage } from "@/app/features/settings/hooks/useSettingsPage";
+import SettingsPage from "@/app/features/settings/pages/SettingsPage";
+import userEvent from "@testing-library/user-event";
+import PreparePage from "@/app/features/preparation/pages/PreparePage";
 import {
   generateLessons,
   regenerateLessons,
 } from "@/app/features/preparation/api";
 import { getPresets } from "@/app/features/presets/api";
 import { getModels, issueCredential } from "@/app/features/settings/api";
-import { defaultSettings, storageKeys } from "@/app/shared/storage/storage";
+import {
+  defaultSettings,
+  loadSettings,
+  storageKeys,
+} from "@/app/shared/storage/storage";
 import { deferred, preset, snapshot, token, variant } from "@/test/fixtures";
 import type { GenerationEvent } from "@/app/shared/schemas/domain";
 
@@ -71,6 +84,35 @@ beforeEach(() => {
 afterEach(() => vi.resetAllMocks());
 
 describe("settings and model caches", () => {
+  it("removes the selected provider credential and model from local storage when Remove key is clicked", async () => {
+    const otherToken = "other..nonce.encrypted.signature";
+    localStorage.setItem(
+      storageKeys.settings,
+      JSON.stringify({
+        ...defaultSettings,
+        keys: { deepSeek: token, gemini: otherToken },
+        models: { deepSeek: "model", gemini: "gemini-model" },
+      }),
+    );
+    const user = userEvent.setup();
+    const view = render(<SettingsPage />, { wrapper: Wrapper });
+    await user.click(screen.getByRole("button", { name: /Remove key/i }));
+    const stored = JSON.parse(localStorage.getItem(storageKeys.settings)!);
+    expect(stored.keys).not.toHaveProperty("deepSeek");
+    expect(stored.models).not.toHaveProperty("deepSeek");
+    expect(stored.keys.gemini).toBe(otherToken);
+    expect(stored.models.gemini).toBe("gemini-model");
+    expect(JSON.stringify(stored)).not.toContain(token);
+    expect(
+      screen.queryByRole("button", { name: /Remove key/i }),
+    ).not.toBeInTheDocument();
+    view.unmount();
+    expect(loadSettings().value.keys).not.toHaveProperty("deepSeek");
+    render(<SettingsPage />, { wrapper: Wrapper });
+    expect(
+      screen.queryByRole("button", { name: /Remove key/i }),
+    ).not.toBeInTheDocument();
+  });
   it("applies a delayed credential response to its original provider without changing the current selection", async () => {
     const pending = deferred<string>();
     vi.mocked(issueCredential).mockReturnValue(pending.promise);
@@ -153,6 +195,9 @@ describe("settings and model caches", () => {
       await saving;
     });
     expect(result.current.settings.keys.deepSeek).toBeUndefined();
+    expect(
+      JSON.parse(localStorage.getItem(storageKeys.settings)!).keys,
+    ).not.toHaveProperty("deepSeek");
   });
   it("does not let an obsolete provider model response replace the current provider list", async () => {
     const pending = deferred<{ id: string; name: string }[]>();
@@ -181,6 +226,130 @@ describe("settings and model caches", () => {
 });
 
 describe("persistent workspace state", () => {
+  it("allows starting another lesson with saved results and an incomplete form", async () => {
+    localStorage.setItem(
+      storageKeys.preparation,
+      JSON.stringify({
+        ...snapshot,
+        variants: [1, 2, 3].map((number) => ({
+          ...variant,
+          id: `old-${number}`,
+          variantNumber: number,
+        })),
+      }),
+    );
+    render(<PreparePage />, { wrapper: Wrapper });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("option", { name: preset.name }),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByRole("button", { name: /Generate lesson plans/ }),
+    ).toBeEnabled();
+  });
+
+  it("clears old saved results for a new lesson, replaces them, and allows another start", async () => {
+    const oldVariants = [1, 2, 3].map((number) => ({
+      ...variant,
+      id: `old-${number}`,
+      variantNumber: number,
+    }));
+    localStorage.setItem(
+      storageKeys.preparation,
+      JSON.stringify({ ...snapshot, variants: oldVariants }),
+    );
+    const pending = deferred<void>();
+    let deliver!: (event: GenerationEvent) => void;
+    vi.mocked(generateLessons)
+      .mockImplementationOnce(async (_request, callback) => {
+        deliver = callback;
+        await pending.promise;
+      })
+      .mockResolvedValueOnce(undefined);
+    const { result } = renderHook(
+      () => ({ state: usePreparation(), presets: usePresets() }),
+      { wrapper: Wrapper },
+    );
+    await waitFor(() =>
+      expect(result.current.presets.selectedPreset).toBeDefined(),
+    );
+    expect(result.current.state.currentVariants).toEqual(oldVariants);
+    act(() => {
+      result.current.state.setClassName("Grade 7");
+      result.current.state.setFiles([
+        new File([snapshot.sourceText], "new-lesson.txt"),
+      ]);
+    });
+    let generation!: Promise<void>;
+    act(() => {
+      generation = result.current.state.generate();
+    });
+    expect(result.current.state.currentVariants).toEqual([]);
+    expect(
+      JSON.parse(localStorage.getItem(storageKeys.preparation)!),
+    ).toBeNull();
+    const newSnapshot = { ...snapshot, preparationId: crypto.randomUUID() };
+    const newVariants = [1, 2, 3].map((number) => ({
+      ...variant,
+      id: `new-${number}`,
+      variantNumber: number,
+    }));
+    await act(async () => {
+      deliver({ event: "preparation", data: newSnapshot });
+      for (const data of newVariants) deliver({ event: "variant_ready", data });
+      deliver({
+        event: "complete",
+        data: { preparationId: newSnapshot.preparationId, round: 1 },
+      });
+      pending.resolve();
+      await generation;
+    });
+    expect(result.current.state.busy).toBe(false);
+    expect(result.current.state.currentVariants).toEqual(newVariants);
+    expect(JSON.parse(localStorage.getItem(storageKeys.preparation)!)).toEqual({
+      ...newSnapshot,
+      variants: newVariants,
+    });
+    await act(async () => {
+      await result.current.state.generate();
+    });
+    expect(vi.mocked(generateLessons)).toHaveBeenCalledTimes(2);
+    expect(
+      JSON.parse(localStorage.getItem(storageKeys.preparation)!),
+    ).toBeNull();
+  });
+
+  it("does not restore old results if a new lesson fails before extraction", async () => {
+    localStorage.setItem(
+      storageKeys.preparation,
+      JSON.stringify({ ...snapshot, variants: [variant] }),
+    );
+    vi.mocked(generateLessons).mockRejectedValueOnce(
+      new Error("Extraction failed"),
+    );
+    const { result } = renderHook(
+      () => ({ state: usePreparation(), presets: usePresets() }),
+      { wrapper: Wrapper },
+    );
+    await waitFor(() =>
+      expect(result.current.presets.selectedPreset).toBeDefined(),
+    );
+    act(() => {
+      result.current.state.setClassName("Grade 7");
+      result.current.state.setFiles([
+        new File([snapshot.sourceText], "new-lesson.txt"),
+      ]);
+    });
+    await act(async () => {
+      await result.current.state.generate();
+    });
+    expect(result.current.state.busy).toBe(false);
+    expect(result.current.state.currentVariants).toEqual([]);
+    expect(
+      JSON.parse(localStorage.getItem(storageKeys.preparation)!),
+    ).toBeNull();
+  });
   it("retains forms and preset drafts through navigation and keeps drafts out of storage", async () => {
     const { result } = renderHook(
       () => ({

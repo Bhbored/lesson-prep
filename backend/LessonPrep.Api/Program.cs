@@ -13,6 +13,10 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 });
 
 builder.Services.RegisterDependencies(builder.Configuration);
+builder.Services.AddHttpsRedirection(options =>
+{
+    if (!builder.Environment.IsDevelopment()) options.HttpsPort = 443;
+});
 
 builder.Services.AddHsts(options =>
 {
@@ -23,6 +27,7 @@ builder.Services.AddHsts(options =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<HandleExceptionMiddleware>();
 app.UseSerilogRequestLogging();
@@ -36,7 +41,9 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Platform health probes use internal HTTP even when public ingress uses HTTPS.
+app.UseWhen(context => context.Request.Path != "/health" && context.Request.Path != "/health/live",
+    branch => branch.UseHttpsRedirection());
 app.UseCors();
 app.UseRateLimiter();
 app.UseSwagger();

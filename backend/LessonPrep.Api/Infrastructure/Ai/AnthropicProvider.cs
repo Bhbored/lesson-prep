@@ -53,6 +53,7 @@ public sealed class AnthropicProvider(IHttpClientFactory factory) : AiProviderBa
         await EnsureSuccessAsync(response, ct);
         await foreach (var (eventName, data) in ReadSseAsync(response, ct))
         {
+            if (eventName == "message_stop") yield break;
             if (eventName == "error") throw new ProviderException("Anthropic did not complete the response.");
             if (eventName != "content_block_delta") continue;
             using var doc = JsonDocument.Parse(data);

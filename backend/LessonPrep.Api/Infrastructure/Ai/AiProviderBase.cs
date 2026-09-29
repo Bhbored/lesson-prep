@@ -74,7 +74,18 @@ public abstract class AiProviderBase(IHttpClientFactory factory) : IAiProvider
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var line = await reader.ReadLineAsync(cancellationToken);
+            string? line;
+            try
+            {
+                line = await reader.ReadLineAsync(cancellationToken);
+            }
+            catch (Exception exception) when (exception is IOException or HttpRequestException)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                throw new ProviderException(
+                    "The AI provider connection was interrupted. Please try generating again.",
+                    innerException: exception);
+            }
             if (line is null) break;
             if (line.Length == 0)
             {

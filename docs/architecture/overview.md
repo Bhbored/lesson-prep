@@ -28,7 +28,7 @@ API routes are versioned under `lessonprep/v1.0/...` (see `Controllers/BaseContr
 - `backend/LessonPrep.Api/Controllers/v1/` — versioned controllers (`Ai`, `Lessons`).
 - `backend/LessonPrep.Api/Application/Contracts/Lessons/StandardLessonFlow.cs` — static default preset.
 - `backend/LessonPrep.Api/Helpers/documents/` — upload validation, CSV/PDF extraction, OCR orchestration.
-- `backend/LessonPrep.Api/Infrastructure/OCR/PaddleOcrEngine.cs` ? singleton with lazy queues for English, Arabic, and French OCR.
+- `backend/LessonPrep.Api/Infrastructure/OCR/PaddleOcrEngine.cs` — singleton with lazy queues for English, Arabic, and French OCR.
 - `backend/LessonPrep.Api/Infrastructure/Ai/` — four provider adapters behind `IAiProvider`.
 - `backend/LessonPrep.Api/Helpers/prompts/LessonPrompt.cs` and `Helpers/schemas/LessonSchema.cs` — shared lesson prompt and JSON schema.
 - `backend/LessonPrep.Api/Application/Services/Lessons/GenerationService.cs` — snapshots, generation, validation, and SSE orchestration.
@@ -37,8 +37,9 @@ API routes are versioned under `lessonprep/v1.0/...` (see `Controllers/BaseContr
 - `frontend/src/app/features/` — preparation, lesson flows, settings, and results pages, components, hooks, and API adapters.
 - `frontend/src/app/providers/` — settings, preset drafts, preparation state, generation lifecycle, and query caching.
 - `frontend/src/app/shared/api/` — schema-validated `ApiClient` and streaming `SseClient`.
+- `frontend/src/app/shared/storage/storage.ts` — validated browser storage, provider migrations, and recovery backups.
 - `frontend/src/styles/` — preserved global, responsive, RTL, and selected-lesson print styles.
 
-## PaddleOCR source checkout
+## Further details
 
-The app uses Sdcb.PaddleOCR and embedded PP-OCRv5 models from NuGet. The `PaddleOCR/` checkout remains reference material and is not deployed.
+See [Frontend architecture](frontend.md) for routes and state ownership, [API contract](api-contract.md) for request/response shapes, and [Documents and OCR](documents-and-ocr.md) for embedded PP-OCRv5 models supplied through NuGet.

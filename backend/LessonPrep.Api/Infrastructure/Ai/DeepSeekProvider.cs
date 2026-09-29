@@ -47,6 +47,7 @@ public sealed class DeepSeekProvider(IHttpClientFactory factory) : AiProviderBas
         await EnsureSuccessAsync(response, ct);
         await foreach (var (eventName, data) in ReadSseAsync(response, ct))
         {
+            if (eventName == "response.completed") yield break;
             if (eventName is "response.failed" or "response.incomplete")
                 throw new ProviderException("DeepSeek did not complete the response.");
             if (eventName != "response.output_text.delta") continue;

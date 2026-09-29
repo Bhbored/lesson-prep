@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using System.Net;
 using Asp.Versioning;
 using LessonPrep.Api.Application.Contracts.Ai;
 using LessonPrep.Api.Application.Contracts.Documents;
@@ -8,6 +9,7 @@ using LessonPrep.Api.Infrastructure.Ai;
 using LessonPrep.Api.Infrastructure.Ocr;
 using LessonPrep.Api.Infrastructure.Security;
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi;
 
@@ -18,6 +20,7 @@ public static class DIContainer
     public static IServiceCollection RegisterDependencies(this IServiceCollection services, IConfiguration configuration)
     {
         return services
+            .RegisterForwardedHeaders(configuration)
             .RegisterCors(configuration)
             .RegisterApiVersioning()
             .RegisterRateLimiting(configuration)
@@ -26,6 +29,32 @@ public static class DIContainer
             .RegisterHttpLogging()
             .RegisterHttpClients()
             .RegisterServices();
+    }
+
+    public static IServiceCollection RegisterForwardedHeaders(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.ForwardLimit = 1;
+            options.ForwardedForHeaderName = configuration["ReverseProxy:ClientIpHeader"] ?? "X-Forwarded-For";
+
+            // Managed ingress can use changing addresses. Opt in only when all public
+            // traffic reaches Kestrel through a proxy that overwrites these headers.
+            if (configuration.GetValue<bool>("ReverseProxy:TrustAll"))
+            {
+                options.KnownProxies.Clear();
+                options.KnownIPNetworks.Clear();
+            }
+            else
+            {
+                foreach (var proxy in configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? [])
+                    options.KnownProxies.Add(IPAddress.Parse(proxy));
+                foreach (var network in configuration.GetSection("ReverseProxy:KnownNetworks").Get<string[]>() ?? [])
+                    options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
+            }
+        });
+        return services;
     }
 
     public static IServiceCollection RegisterCors(this IServiceCollection services, IConfiguration configuration)

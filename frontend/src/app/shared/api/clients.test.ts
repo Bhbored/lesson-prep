@@ -142,6 +142,20 @@ describe("ApiClient", () => {
   });
 });
 describe("SseClient", () => {
+  it("finishes and cleans up on complete even when the connection remains open", async () => {
+    const cancel = vi.fn();
+    const response = new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(completed));
+        },
+        cancel,
+      }),
+    );
+    await new SseClient().consume(response, generationEventSchema, () => {});
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(response.body!.locked).toBe(false);
+  }, 1000);
   it("parses every known event with split CRLF boundaries and multilingual UTF-8", async () => {
     const events: GenerationEvent[] = [
       { event: "status", data: { stage: "extracting" } },

@@ -8,7 +8,12 @@ export default defineConfig({
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   server: {
     proxy: {
-      "/lessonprep": { target: "http://localhost:5132", changeOrigin: true },
+      "/lessonprep": {
+        target: "https://localhost:7132",
+        changeOrigin: true,
+        // ASP.NET Core uses a local development certificate.
+        secure: false,
+      },
     },
   },
 });

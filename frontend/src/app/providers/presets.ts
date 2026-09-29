@@ -31,6 +31,7 @@ export function usePresetsState() {
     if (query.error) setError(query.error.message);
   }, [query.error, setError]);
   const serverPresets = query.data ?? [];
+  const defaultPreset = serverPresets.find((preset) => preset.isDefault);
   const allPresets = [...serverPresets, ...localPresets];
   const selectedPresetId = allPresets.some((p) => p.id === selection)
     ? selection
@@ -45,6 +46,11 @@ export function usePresetsState() {
     setLocalPresets(next);
     const issue = saveStored(storageKeys.presets, next);
     if (issue) setNotice(issue);
+  }
+  function createPreset() {
+    if (!defaultPreset) return;
+    setDraftPreset(blankPreset(defaultPreset.phases));
+    setError("");
   }
   function duplicate(preset: Preset) {
     const copy = {
@@ -123,7 +129,8 @@ export function usePresetsState() {
     savePreset,
     editPhase,
     movePhase,
-    blankPreset,
+    createPreset,
+    canCreatePreset: Boolean(defaultPreset),
     presetLoading: query.isPending,
     retryPresets: query.refetch,
   };

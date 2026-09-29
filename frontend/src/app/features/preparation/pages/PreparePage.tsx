@@ -224,13 +224,7 @@ export default function PreparePage() {
         </section>
       </div>
       <div className="action-row">
-        <button
-          className="primary-button"
-          disabled={
-            busy || !className || !selectedPreset || phaseTotal !== duration
-          }
-          onClick={generate}
-        >
+        <button className="primary-button" disabled={busy} onClick={generate}>
           <WandSparkles aria-hidden="true" size={18} />
           {busy ? t.generating : t.generate}
           <ChevronRight aria-hidden="true" size={18} />
