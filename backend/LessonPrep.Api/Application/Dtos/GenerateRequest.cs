@@ -12,4 +12,5 @@ public sealed record GenerateRequest(
     AiProvider Provider,
     string Model,
     string CredentialToken,
+    string MaterialNote,
     IReadOnlyList<IFormFile> Files);

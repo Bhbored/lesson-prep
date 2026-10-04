@@ -12,6 +12,8 @@
   "heroBody": "Turn your source material into complete, classroom-ready lesson plans.",
   "material": "Teaching material",
   "materialHelp": "PDF, TXT or CSV · up to 5 files · 20 MB each",
+  "materialNote": "Notes about this material",
+  "materialNoteHelp": "Optional. What to focus on, skip, or treat as most important in the upload.",
   "chooseFiles": "Choose files",
   "classInfo": "Class information",
   "className": "Class / grade",

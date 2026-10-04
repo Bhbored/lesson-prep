@@ -48,7 +48,7 @@ public sealed class GenerationService(
         await Sse.WriteAsync(response, "status", new { stage = "extracting" }, ct);
         var preparation = await CreateAsync(
             form.Files, form.ClassName, form.DurationMinutes, form.SourceLanguage, form.Phases, form.VariantCount,
-            form.SessionCount, ct);
+            form.SessionCount, form.MaterialNote, ct);
         await Sse.WriteAsync(response, "preparation", preparation, ct);
         await GenerateAsync(
             preparation, form.VariantCount, 1, form.Provider, form.Model, form.CredentialToken, response, ct);
@@ -74,6 +74,9 @@ public sealed class GenerationService(
             : int.TryParse(sessionField, out var parsedSessions)
                 ? parsedSessions
                 : throw new LessonValidationException("Session count must be a number.");
+        var materialNote = form["materialNote"].ToString();
+        if (materialNote.Length > 2_000)
+            throw new LessonValidationException("Material notes must be at most 2000 characters.");
         var language = Required("sourceLanguage");
         var phases = ResolvePhases(form["lessonFlowPresetId"], form["customPhases"], language);
         LessonValidator.ValidateFlow(className, duration, phases, count, sessions);
@@ -83,18 +86,21 @@ public sealed class GenerationService(
 
         return new GenerateRequest(
             className, duration, count, sessions, language, phases, provider, Required("model"),
-            credentialToken, [.. form.Files]);
+            credentialToken, materialNote.Trim(), [.. form.Files]);
     }
 
     public async Task<PreparationSnapshot> CreateAsync(IReadOnlyList<IFormFile> files, string className, int duration,
-        string language, IReadOnlyList<PhaseSpec> phases, int count, int sessions, CancellationToken ct)
+        string language, IReadOnlyList<PhaseSpec> phases, int count, int sessions, string materialNote,
+        CancellationToken ct)
     {
         LessonValidator.ValidateFlow(className, duration, phases, count, sessions);
+        if (materialNote.Length > 2_000)
+            throw new LessonValidationException("Material notes must be at most 2000 characters.");
         var extracted = await documents.ExtractAsync(files, language, ct);
         logger.LogInformation("Extracted material: pages {Pages}, OCR pages {OcrPages}, characters {Characters}",
             extracted.PageCount, extracted.OcrPages, extracted.Text.Length);
         return new PreparationSnapshot(Guid.NewGuid(), className.Trim(), duration, language,
-            phases.OrderBy(x => x.Order).ToList(), extracted.Text, "", sessions);
+            phases.OrderBy(x => x.Order).ToList(), extracted.Text, "", sessions, materialNote.Trim());
     }
 
     public static void ValidateSnapshot(PreparationSnapshot snapshot, int count, int round)
@@ -111,6 +117,8 @@ public sealed class GenerationService(
                                                 || snapshot.PreparedSourceText.Length > 0 &&
                                                 string.IsNullOrWhiteSpace(snapshot.PreparedSourceText))
             throw new LessonValidationException("The prepared source material is invalid.");
+        if (snapshot.MaterialNote is null || snapshot.MaterialNote.Length > 2_000)
+            throw new LessonValidationException("The material notes are invalid.");
         if (round is < 1 or > 10_000) throw new LessonValidationException("The generation round is invalid.");
         LessonValidator.ValidateFlow(snapshot.ClassName, snapshot.TotalDurationMinutes, snapshot.Phases, count,
             snapshot.SessionCount);
@@ -168,7 +176,8 @@ public sealed class GenerationService(
                 {
                     var aiRequest = new LessonAiRequest(snapshot.ClassName, snapshot.TotalDurationMinutes,
                         snapshot.SourceLanguage, snapshot.Phases, sourceText, string.Join("; ", approaches),
-                        session, snapshot.SessionCount, string.Join("; ", priorSessions), validationFeedback);
+                        session, snapshot.SessionCount, string.Join("; ", priorSessions), snapshot.MaterialNote,
+                        validationFeedback);
                     var raw = new StringBuilder();
                     var previewExtractor = new ProvisionalTextExtractor();
                     await foreach (var chunk in provider.StreamLessonJsonAsync(apiKey, model, aiRequest, ct))

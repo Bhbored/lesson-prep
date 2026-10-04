@@ -57,6 +57,7 @@ it.skipIf(!process.env.API_TEST_URL)(
               sourceLanguage: "en",
               variantCount: 1,
               sessionCount: 1,
+              materialNote: "",
               provider: "deepSeek",
               model: "unused",
               credentialToken: "invalid-token",

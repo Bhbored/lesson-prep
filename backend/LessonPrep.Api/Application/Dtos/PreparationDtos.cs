@@ -11,7 +11,8 @@ public sealed record PreparationSnapshot(
     [Required, MinLength(1), MaxLength(12)] List<PhaseSpec> Phases,
     [Required, StringLength(200_000, MinimumLength = 30)] string SourceText,
     [Required(AllowEmptyStrings = true), StringLength(60_000)] string PreparedSourceText,
-    [Range(1, 6)] int SessionCount = 1);
+    [Range(1, 6)] int SessionCount = 1,
+    [Required(AllowEmptyStrings = true), StringLength(2_000)] string MaterialNote = "");
 
 public sealed record RegenerateRequest(
     [Required] PreparationSnapshot Snapshot,

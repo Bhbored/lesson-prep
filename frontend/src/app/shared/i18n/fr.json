@@ -12,6 +12,8 @@
   "heroBody": "Transformez vos documents en séances complètes, prêtes à être utilisées en classe.",
   "material": "Documents pédagogiques",
   "materialHelp": "PDF, TXT ou CSV · jusqu’à 5 fichiers · 20 Mo par fichier",
+  "materialNote": "Notes sur ce support",
+  "materialNoteHelp": "Facultatif. Ce qu’il faut prioriser, ignorer ou traiter comme le plus important dans le fichier.",
   "chooseFiles": "Choisir des fichiers",
   "classInfo": "Informations sur la classe",
   "className": "Classe / niveau",

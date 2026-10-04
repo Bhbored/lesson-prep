@@ -27,6 +27,7 @@ export const snapshot: PreparationSnapshot = {
     "Photosynthesis uses sunlight and water to help plants grow in the classroom.",
   preparedSourceText: "",
   sessionCount: 1,
+  materialNote: "",
 };
 export const token = "header..iv.cipher.tag";
 export const lesson = {

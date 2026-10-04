@@ -100,6 +100,7 @@ describe("ApiClient", () => {
       sourceLanguage: "en" as const,
       variantCount: 3,
       sessionCount: 2,
+      materialNote: "Skip the appendix; focus on the core definitions.",
       provider: "deepSeek" as const,
       model: "model",
       credentialToken: "token",
@@ -112,6 +113,9 @@ describe("ApiClient", () => {
     expect(form.get("files")).toMatchObject({ name: "lesson.pdf" });
     expect(form.get("totalDurationMinutes")).toBe("45");
     expect(form.get("sessionCount")).toBe("2");
+    expect(form.get("materialNote")).toBe(
+      "Skip the appendix; focus on the core definitions.",
+    );
     expect(form.get("credentialToken")).toBe("token");
     expect(form.get("lessonFlowPresetId")).toBe(preset.id);
     expect(form.has("customPhases")).toBe(false);

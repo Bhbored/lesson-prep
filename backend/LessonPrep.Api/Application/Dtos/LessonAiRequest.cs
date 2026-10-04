@@ -12,4 +12,5 @@ public sealed record LessonAiRequest(
     [Range(1, 6)] int SessionNumber = 1,
     [Range(1, 6)] int SessionCount = 1,
     [Required, StringLength(10_000)] string PriorSessions = "",
+    [Required(AllowEmptyStrings = true), StringLength(2_000)] string MaterialNote = "",
     [StringLength(2_000)] string ValidationFeedback = "");

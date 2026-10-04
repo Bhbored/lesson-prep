@@ -133,6 +133,8 @@ function migratePreparation(raw: unknown): unknown {
     ...value,
     sessionCount:
       typeof value.sessionCount === "number" ? value.sessionCount : 1,
+    materialNote:
+      typeof value.materialNote === "string" ? value.materialNote : "",
     variants,
   };
 }

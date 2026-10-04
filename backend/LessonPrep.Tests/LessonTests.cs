@@ -85,6 +85,17 @@ public sealed class LessonTests
     }
 
     [Fact]
+    public void RegenerationSnapshotAcceptsOptionalMaterialNotes()
+    {
+        var snapshot = new PreparationSnapshot(Guid.NewGuid(), "Grade 7", 45, "en", Flow.ToList(),
+            "Photosynthesis uses sunlight and water to make food.", "", 1, "Skip the glossary.");
+        GenerationService.ValidateSnapshot(snapshot, 1, 1);
+        GenerationService.ValidateSnapshot(snapshot with { MaterialNote = "" }, 1, 1);
+        Assert.Throws<LessonValidationException>(() =>
+            GenerationService.ValidateSnapshot(snapshot with { MaterialNote = new string('x', 2001) }, 1, 1));
+    }
+
+    [Fact]
     public void LessonRejectsAiPhaseTampering()
     {
         var valid = new GeneratedLesson("Plants", "Photosynthesis", "Grade 7", 45, ["Explain photosynthesis"], ["Board"],

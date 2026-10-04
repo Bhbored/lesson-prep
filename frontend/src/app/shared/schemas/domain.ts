@@ -100,6 +100,7 @@ export const snapshotSchema = z
     sourceText: z.string().min(30).max(200_000),
     preparedSourceText: z.string().max(60_000),
     sessionCount: z.number().int().min(1).max(6).default(1),
+    materialNote: z.string().max(2_000).default(""),
   })
   .refine(
     (value) =>

@@ -28,6 +28,7 @@ export const generateSchema = z
     sourceLanguage: languageSchema,
     variantCount: z.number().int().min(1).max(3),
     sessionCount: z.number().int().min(1).max(6),
+    materialNote: z.string().max(2_000),
     provider: providerSchema,
     model: z.string().min(1).max(150),
     credentialToken: z.string().min(1),

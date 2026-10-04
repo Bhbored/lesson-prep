@@ -3,11 +3,12 @@ import type { usePreparePage } from "@/app/features/preparation/hooks/usePrepare
 interface MaterialUploadProps {
   readonly model: Pick<
     ReturnType<typeof usePreparePage>,
-    "t" | "files" | "setFiles" | "fieldErrors"
+    "t" | "files" | "setFiles" | "fieldErrors" | "materialNote" | "setMaterialNote"
   >;
 }
 export function MaterialUpload({ model }: Readonly<MaterialUploadProps>) {
-  const { t, files, setFiles, fieldErrors } = model;
+  const { t, files, setFiles, fieldErrors, materialNote, setMaterialNote } =
+    model;
   return (
     <>
       <section className="panel wide col-span-full rounded-xl border border-line bg-paper p-5 sm:p-6">
@@ -43,6 +44,27 @@ export function MaterialUpload({ model }: Readonly<MaterialUploadProps>) {
             {fieldErrors.files}
           </p>
         )}
+        <label className="mt-5 block text-xs font-semibold text-muted">
+          {t.materialNote}
+          <textarea
+            className="mt-2 block min-h-24 w-full resize-y rounded-lg border border-[#7a9982] bg-white px-3 py-2 text-sm text-ink focus-visible:border-leaf-600 focus-visible:ring-2 focus-visible:ring-leaf-200"
+            name="materialNote"
+            maxLength={2000}
+            rows={3}
+            value={materialNote}
+            placeholder={t.materialNoteHelp}
+            aria-invalid={Boolean(fieldErrors.materialNote)}
+            onChange={(event) => setMaterialNote(event.target.value)}
+          />
+          <span className="mt-1 block text-xs font-normal text-muted">
+            {t.materialNoteHelp}
+          </span>
+          {fieldErrors.materialNote && (
+            <span className="validation-text mt-1 block text-xs text-red-700" role="alert">
+              {fieldErrors.materialNote}
+            </span>
+          )}
+        </label>
       </section>
     </>
   );
