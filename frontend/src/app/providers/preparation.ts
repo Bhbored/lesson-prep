@@ -42,7 +42,8 @@ export function usePreparationState() {
     [className, setClassName] = useState(""),
     [duration, setDuration] = useState(45);
   const [sourceLanguage, setSourceLanguage] = useState<Language>("en"),
-    [variantCount, setVariantCount] = useState(3);
+    [variantCount, setVariantCount] = useState(3),
+    [sessionCount, setSessionCount] = useState(1);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const request = useRef<AbortController | null>(null),
     lastPersisted = useRef(value);
@@ -105,6 +106,7 @@ export function usePreparationState() {
           totalDurationMinutes: duration,
           sourceLanguage,
           variantCount,
+          sessionCount,
           provider: settings.provider,
           model,
           credentialToken,
@@ -186,6 +188,8 @@ export function usePreparationState() {
     setSourceLanguage,
     variantCount,
     setVariantCount,
+    sessionCount,
+    setSessionCount,
     latestRound,
     currentVariants,
     activeVariant,

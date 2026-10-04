@@ -15,6 +15,7 @@ export default function PreparePage() {
   const {
     fieldErrors,
     variantCount,
+    sessionCount,
     settings,
     t,
     className,
@@ -24,6 +25,7 @@ export default function PreparePage() {
     sourceLanguage,
     setSourceLanguage,
     setVariantCount,
+    setSessionCount,
     busy,
     generate,
     selectedPresetId,
@@ -158,6 +160,22 @@ export default function PreparePage() {
             {providerNames[settings.provider]} ·{" "}
             {settings.models[settings.provider] || t.selectModel}
           </p>
+          <div className="mt-5 border-t border-line pt-5">
+            <h4 className="font-semibold">{t.sessions}</h4>
+            <p className="mt-0.5 text-xs text-muted">{t.sessionsHelp}</p>
+            <div className="segmented mt-3 flex flex-wrap gap-2">
+              {[1, 2, 3, 4, 5, 6].map((number) => (
+                <button
+                  key={number}
+                  type="button"
+                  className={`min-h-11 min-w-12 rounded-lg border px-4 font-semibold ${sessionCount === number ? "selected border-leaf-300 bg-leaf-100 text-leaf-800" : "border-line bg-white text-muted hover:border-leaf-300"}`}
+                  onClick={() => setSessionCount(number)}
+                >
+                  {number}
+                </button>
+              ))}
+            </div>
+          </div>
         </section>
         <section className="panel wide col-span-full rounded-xl border border-line bg-paper p-5 sm:p-6">
           <div className="panel-heading mb-5 flex items-center gap-3">

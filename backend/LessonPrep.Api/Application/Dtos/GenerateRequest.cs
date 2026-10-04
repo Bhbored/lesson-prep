@@ -6,6 +6,7 @@ public sealed record GenerateRequest(
     string ClassName,
     int DurationMinutes,
     int VariantCount,
+    int SessionCount,
     string SourceLanguage,
     IReadOnlyList<PhaseSpec> Phases,
     AiProvider Provider,

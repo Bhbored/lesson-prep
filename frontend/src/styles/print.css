@@ -9,8 +9,30 @@
   }
   .app-shell > *:not(.main-content),
   .main-content > *:not(.page-content),
-  .page-content > *:not(.lesson-result) {
+  .page-content > *:not(.session-list):not(.lesson-result),
+  .session-list > .session-card > .session-card-header,
+  .variant-tabs,
+  .section-head,
+  .processing-card,
+  .live-panel,
+  .detail-buttons {
     display: none !important;
+  }
+  .session-card > .grid {
+    display: block !important;
+    grid-template-rows: none !important;
+  }
+  .session-card .min-h-0 {
+    overflow: visible !important;
+  }
+  .session-card-body {
+    display: block !important;
+    opacity: 1 !important;
+  }
+  .session-card {
+    border: 0 !important;
+    margin: 0 0 16px !important;
+    box-shadow: none !important;
   }
   .main-content,
   .page-content {

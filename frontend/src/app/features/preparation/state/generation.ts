@@ -1,4 +1,8 @@
-import type { GenerationEvent, Preparation } from "@/app/shared/schemas/domain";
+import type {
+  GenerationEvent,
+  Preparation,
+  Variant,
+} from "@/app/shared/schemas/domain";
 
 export interface GenerationState {
   preparation: Preparation | null;
@@ -13,6 +17,36 @@ export type GenerationAction =
   | { type: "event"; value: GenerationEvent }
   | { type: "finish"; error?: string }
   | { type: "select"; id: string };
+
+function applySessionReady(
+  preparation: Preparation,
+  data: Extract<GenerationEvent, { event: "session_ready" }>["data"],
+): Variant[] {
+  const existing = preparation.variants.find(
+    (variant) =>
+      variant.generationRound === data.generationRound &&
+      variant.id === data.variantId,
+  );
+  const sessions = [...(existing?.sessions ?? [])];
+  sessions[data.sessionNumber - 1] = data.lesson;
+  const next: Variant = {
+    id: data.variantId,
+    variantNumber: data.variantNumber,
+    generationRound: data.generationRound,
+    provider: data.provider,
+    model: data.model,
+    sessions,
+  };
+  return [
+    ...preparation.variants.filter(
+      (variant) =>
+        variant.generationRound === data.generationRound &&
+        variant.id !== data.variantId,
+    ),
+    next,
+  ];
+}
+
 export function generationReducer(
   state: GenerationState,
   action: GenerationAction,
@@ -42,7 +76,7 @@ export function generationReducer(
       return {
         ...state,
         stage: event.data.stage,
-        liveDraft: ["variant", "retry"].includes(event.data.stage)
+        liveDraft: ["variant", "session", "retry"].includes(event.data.stage)
           ? ""
           : state.liveDraft,
       };
@@ -67,22 +101,15 @@ export function generationReducer(
         ...state,
         liveDraft: (state.liveDraft + event.data.text).slice(-12_000),
       };
-    case "variant_ready":
+    case "session_ready":
       return {
         ...state,
         liveDraft: "",
-        activeVariantId: event.data.id,
+        activeVariantId: event.data.variantId,
         preparation: state.preparation
           ? {
               ...state.preparation,
-              variants: [
-                ...state.preparation.variants.filter(
-                  (v) =>
-                    v.generationRound === event.data.generationRound &&
-                    v.id !== event.data.id,
-                ),
-                event.data,
-              ],
+              variants: applySessionReady(state.preparation, event.data),
             }
           : null,
       };

@@ -47,7 +47,8 @@ public sealed class GenerationService(
         var form = await ParseGenerateFormAsync(request, ct);
         await Sse.WriteAsync(response, "status", new { stage = "extracting" }, ct);
         var preparation = await CreateAsync(
-            form.Files, form.ClassName, form.DurationMinutes, form.SourceLanguage, form.Phases, form.VariantCount, ct);
+            form.Files, form.ClassName, form.DurationMinutes, form.SourceLanguage, form.Phases, form.VariantCount,
+            form.SessionCount, ct);
         await Sse.WriteAsync(response, "preparation", preparation, ct);
         await GenerateAsync(
             preparation, form.VariantCount, 1, form.Provider, form.Model, form.CredentialToken, response, ct);
@@ -67,27 +68,33 @@ public sealed class GenerationService(
         if (!int.TryParse(Required("totalDurationMinutes"), out var duration)
             || !int.TryParse(Required("variantCount"), out var count))
             throw new LessonValidationException("Duration and variant count must be numbers.");
+        var sessionField = form["sessionCount"].ToString();
+        var sessions = string.IsNullOrWhiteSpace(sessionField)
+            ? 1
+            : int.TryParse(sessionField, out var parsedSessions)
+                ? parsedSessions
+                : throw new LessonValidationException("Session count must be a number.");
         var language = Required("sourceLanguage");
         var phases = ResolvePhases(form["lessonFlowPresetId"], form["customPhases"], language);
-        LessonValidator.ValidateFlow(className, duration, phases, count);
+        LessonValidator.ValidateFlow(className, duration, phases, count, sessions);
         var credentialToken = Required("credentialToken");
         if (!Enum.TryParse<AiProvider>(Required("provider"), true, out var provider) || !Enum.IsDefined(provider))
             throw new LessonValidationException("Unknown AI provider.");
 
         return new GenerateRequest(
-            className, duration, count, language, phases, provider, Required("model"),
+            className, duration, count, sessions, language, phases, provider, Required("model"),
             credentialToken, [.. form.Files]);
     }
 
     public async Task<PreparationSnapshot> CreateAsync(IReadOnlyList<IFormFile> files, string className, int duration,
-        string language, IReadOnlyList<PhaseSpec> phases, int count, CancellationToken ct)
+        string language, IReadOnlyList<PhaseSpec> phases, int count, int sessions, CancellationToken ct)
     {
-        LessonValidator.ValidateFlow(className, duration, phases, count);
+        LessonValidator.ValidateFlow(className, duration, phases, count, sessions);
         var extracted = await documents.ExtractAsync(files, language, ct);
         logger.LogInformation("Extracted material: pages {Pages}, OCR pages {OcrPages}, characters {Characters}",
             extracted.PageCount, extracted.OcrPages, extracted.Text.Length);
         return new PreparationSnapshot(Guid.NewGuid(), className.Trim(), duration, language,
-            phases.OrderBy(x => x.Order).ToList(), extracted.Text, "");
+            phases.OrderBy(x => x.Order).ToList(), extracted.Text, "", sessions);
     }
 
     public static void ValidateSnapshot(PreparationSnapshot snapshot, int count, int round)
@@ -105,7 +112,8 @@ public sealed class GenerationService(
                                                 string.IsNullOrWhiteSpace(snapshot.PreparedSourceText))
             throw new LessonValidationException("The prepared source material is invalid.");
         if (round is < 1 or > 10_000) throw new LessonValidationException("The generation round is invalid.");
-        LessonValidator.ValidateFlow(snapshot.ClassName, snapshot.TotalDurationMinutes, snapshot.Phases, count);
+        LessonValidator.ValidateFlow(snapshot.ClassName, snapshot.TotalDurationMinutes, snapshot.Phases, count,
+            snapshot.SessionCount);
     }
 
     public async Task GenerateAsync(PreparationSnapshot snapshot, int count, int round, AiProvider providerId, string model,
@@ -140,54 +148,72 @@ public sealed class GenerationService(
         }
 
         var approaches = new List<string>();
+        var sourceText = string.IsNullOrEmpty(preparedSource) ? snapshot.SourceText : preparedSource;
         await Sse.WriteAsync(response, "status", new { stage = "generating", round }, ct);
         for (var number = 1; number <= count; number++)
         {
             ct.ThrowIfCancellationRequested();
             await Sse.WriteAsync(response, "status", new { stage = "variant", number, count }, ct);
-            GeneratedLesson? lesson = null;
-            var validationFeedback = "";
-            for (var attempt = 0; attempt < 2 && lesson is null; attempt++)
+            var variantId = Guid.NewGuid();
+            var priorSessions = new List<string>();
+            GeneratedLesson? firstSession = null;
+            for (var session = 1; session <= snapshot.SessionCount; session++)
             {
-                var aiRequest = new LessonAiRequest(snapshot.ClassName, snapshot.TotalDurationMinutes,
-                    snapshot.SourceLanguage,
-                    snapshot.Phases, string.IsNullOrEmpty(preparedSource) ? snapshot.SourceText : preparedSource,
-                    string.Join("; ", approaches), validationFeedback);
-                var raw = new StringBuilder();
-                var previewExtractor = new ProvisionalTextExtractor();
-                await foreach (var chunk in provider.StreamLessonJsonAsync(apiKey, model, aiRequest, ct))
+                ct.ThrowIfCancellationRequested();
+                await Sse.WriteAsync(response, "status",
+                    new { stage = "session", number, session, count = snapshot.SessionCount }, ct);
+                GeneratedLesson? lesson = null;
+                var validationFeedback = "";
+                for (var attempt = 0; attempt < 2 && lesson is null; attempt++)
                 {
-                    raw.Append(chunk);
-                    if (raw.Length > 100_000) throw new ProviderException("AI response exceeded the allowed size.");
-                    var preview = previewExtractor.Push(chunk);
-                    if (preview.Length > 0)
-                        await Sse.WriteAsync(response, "text_delta", new { number, text = preview }, ct);
+                    var aiRequest = new LessonAiRequest(snapshot.ClassName, snapshot.TotalDurationMinutes,
+                        snapshot.SourceLanguage, snapshot.Phases, sourceText, string.Join("; ", approaches),
+                        session, snapshot.SessionCount, string.Join("; ", priorSessions), validationFeedback);
+                    var raw = new StringBuilder();
+                    var previewExtractor = new ProvisionalTextExtractor();
+                    await foreach (var chunk in provider.StreamLessonJsonAsync(apiKey, model, aiRequest, ct))
+                    {
+                        raw.Append(chunk);
+                        if (raw.Length > 100_000) throw new ProviderException("AI response exceeded the allowed size.");
+                        var preview = previewExtractor.Push(chunk);
+                        if (preview.Length > 0)
+                            await Sse.WriteAsync(response, "text_delta",
+                                new { number, session, text = preview }, ct);
+                    }
+
+                    try
+                    {
+                        lesson = LessonValidator.ParseAndValidate(raw.ToString(), snapshot.ClassName,
+                            snapshot.TotalDurationMinutes, snapshot.Phases);
+                    }
+                    catch (LessonValidationException exception)
+                    {
+                        if (attempt == 1) throw;
+                        validationFeedback = exception.Message;
+                        logger.LogWarning(
+                            "Invalid AI output for provider {Provider}, model {Model}, session {Session}; retrying once",
+                            providerId, model, session);
+                        await Sse.WriteAsync(response, "status",
+                            new { stage = "retry", number, session }, ct);
+                    }
                 }
 
-                try
-                {
-                    lesson = LessonValidator.ParseAndValidate(raw.ToString(), snapshot.ClassName,
-                        snapshot.TotalDurationMinutes, snapshot.Phases);
-                }
-                catch (LessonValidationException exception)
-                {
-                    if (attempt == 1) throw;
-                    validationFeedback = exception.Message;
-                    logger.LogWarning("Invalid AI output for provider {Provider}, model {Model}; retrying once",
-                        providerId, model);
-                    await Sse.WriteAsync(response, "status", new { stage = "retry", number }, ct);
-                }
+                if (lesson is null) throw new LessonValidationException("AI returned no lesson.");
+                firstSession ??= lesson;
+                priorSessions.Add($"{lesson.Title}: {lesson.Phases.FirstOrDefault()?.Objective}");
+                var payload = new SessionReadyDto(variantId, number, round, session, snapshot.SessionCount,
+                    providerId, model, lesson);
+                await Sse.WriteAsync(response, "session_ready", payload, ct);
             }
 
-            if (lesson is null) throw new LessonValidationException("AI returned no lesson.");
-            approaches.Add($"{lesson.Title}: {lesson.Phases.FirstOrDefault()?.Objective}");
-            var variant = new VariantDto(Guid.NewGuid(), number, round, providerId, model, lesson);
-            await Sse.WriteAsync(response, "variant_ready", variant, ct);
+            if (firstSession is not null)
+                approaches.Add($"{firstSession.Title}: {firstSession.Phases.FirstOrDefault()?.Objective}");
         }
 
         await Sse.WriteAsync(response, "complete", new { preparationId = snapshot.PreparationId, round }, ct);
-        logger.LogInformation("Generated {Count} variants for preparation {PreparationId} with {Provider}/{Model}",
-            count, snapshot.PreparationId, providerId, model);
+        logger.LogInformation(
+            "Generated {Count} variants with {Sessions} sessions for preparation {PreparationId} with {Provider}/{Model}",
+            count, snapshot.SessionCount, snapshot.PreparationId, providerId, model);
     }
 
     public static IEnumerable<string> SourceChunks(string source, int maximumLength)

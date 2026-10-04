@@ -50,7 +50,7 @@ export class SseClient {
               "preparation",
               "source_prepared",
               "text_delta",
-              "variant_ready",
+              "session_ready",
               "complete",
             ].includes(event)
           ) {

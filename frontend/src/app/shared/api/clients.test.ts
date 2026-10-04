@@ -99,6 +99,7 @@ describe("ApiClient", () => {
       totalDurationMinutes: 45,
       sourceLanguage: "en" as const,
       variantCount: 3,
+      sessionCount: 2,
       provider: "deepSeek" as const,
       model: "model",
       credentialToken: "token",
@@ -110,6 +111,7 @@ describe("ApiClient", () => {
     expect(options.signal).toBe(signal);
     expect(form.get("files")).toMatchObject({ name: "lesson.pdf" });
     expect(form.get("totalDurationMinutes")).toBe("45");
+    expect(form.get("sessionCount")).toBe("2");
     expect(form.get("credentialToken")).toBe("token");
     expect(form.get("lessonFlowPresetId")).toBe(preset.id);
     expect(form.has("customPhases")).toBe(false);
@@ -166,7 +168,19 @@ describe("SseClient", () => {
       },
       { event: "text_delta", data: { number: 1, text: "Lumière الشمس" } },
       { event: "status", data: { stage: "retry", number: 1 } },
-      { event: "variant_ready", data: variant },
+      {
+        event: "session_ready",
+        data: {
+          variantId: variant.id,
+          variantNumber: variant.variantNumber,
+          generationRound: variant.generationRound,
+          sessionNumber: 1,
+          sessionCount: 1,
+          provider: variant.provider,
+          model: variant.model,
+          lesson: variant.sessions[0],
+        },
+      },
       {
         event: "complete",
         data: { preparationId: snapshot.preparationId, round: 1 },

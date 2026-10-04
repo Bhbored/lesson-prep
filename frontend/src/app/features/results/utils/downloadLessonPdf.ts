@@ -1,9 +1,15 @@
-export async function downloadLessonPdf(element: HTMLElement, variantNumber: number) {
+export async function downloadLessonPdf(
+  element: HTMLElement,
+  variantNumber: number,
+  sessionNumber: number,
+) {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const filename = `result_${variantNumber}_${timestamp}.pdf`;
-  // Snapshot the selected result before asynchronous loading or rendering.
+  const filename = `result_opt${variantNumber}_session${sessionNumber}_${timestamp}.pdf`;
   const source = element.cloneNode(true) as HTMLElement;
-  source.classList.add("pdf-export");
+  source.classList.add("pdf-export", "session-expanded");
+  source.hidden = false;
+  source.removeAttribute("hidden");
+  source.style.display = "";
   source.dir = getComputedStyle(element).direction;
   await document.fonts.ready;
   const { default: html2pdf } = await import("html2pdf.js");
@@ -11,7 +17,12 @@ export async function downloadLessonPdf(element: HTMLElement, variantNumber: num
     filename,
     margin: 16,
     image: { type: "jpeg" as const, quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: 1024 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      windowWidth: 1024,
+    },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
     pagebreak: { mode: ["css"], avoid: [".result-hero", ".panel", "li"] },
   };

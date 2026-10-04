@@ -66,27 +66,29 @@ public static class LessonValidator
         };
     }
 
-    public static void ValidateFlow(string className, int duration, IReadOnlyList<PhaseSpec> phases, int variants)
+    public static void ValidateFlow(string className, int duration, IReadOnlyList<PhaseSpec> phases, int variants,
+        int sessions = 1)
     {
-        var invalid = (className, duration, variants, phases) switch
+        var invalid = (className, duration, variants, sessions, phases) switch
         {
-            var (name, _, _, _) when string.IsNullOrWhiteSpace(name) || name.Length > 100 => true,
-            (_, < 10 or > 240, _, _) => true,
-            (_, _, < 1 or > 3, _) => true,
-            (_, _, _, null) => true,
-            (_, _, _, { Count: < 1 or > 12 }) => true,
-            var (_, _, _, flow) when flow.Any(x => string.IsNullOrWhiteSpace(x.Name)
+            var (name, _, _, _, _) when string.IsNullOrWhiteSpace(name) || name.Length > 100 => true,
+            (_, < 10 or > 240, _, _, _) => true,
+            (_, _, < 1 or > 3, _, _) => true,
+            (_, _, _, < 1 or > 6, _) => true,
+            (_, _, _, _, null) => true,
+            (_, _, _, _, { Count: < 1 or > 12 }) => true,
+            var (_, _, _, _, flow) when flow.Any(x => string.IsNullOrWhiteSpace(x.Name)
                                                    || x.Name.Length > 80
                                                    || x.DurationMinutes <= 0) => true,
-            var (_, total, _, flow) when flow.Sum(x => x.DurationMinutes) != total => true,
-            var (_, _, _, flow) when !flow.Select(x => x.Order).Order()
+            var (_, total, _, _, flow) when flow.Sum(x => x.DurationMinutes) != total => true,
+            var (_, _, _, _, flow) when !flow.Select(x => x.Order).Order()
                 .SequenceEqual(Enumerable.Range(1, flow.Count)) => true,
             _ => false
         };
 
         if (invalid)
             throw new LessonValidationException(
-                "Check class, lesson time, variant count, and phase order and durations.");
+                "Check class, lesson time, variant count, session count, and phase order and durations.");
     }
 
     private static string? PhaseError(IReadOnlyList<LessonPhaseResult> actual, IReadOnlyList<PhaseSpec> expected)

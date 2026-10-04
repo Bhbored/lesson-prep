@@ -9,4 +9,7 @@ public sealed record LessonAiRequest(
     [Required, MinLength(1), MaxLength(12)] IReadOnlyList<PhaseSpec> Phases,
     [Required, StringLength(200_000, MinimumLength = 30)] string SourceText,
     [Required, StringLength(10_000)] string PreviousApproaches,
+    [Range(1, 6)] int SessionNumber = 1,
+    [Range(1, 6)] int SessionCount = 1,
+    [Required, StringLength(10_000)] string PriorSessions = "",
     [StringLength(2_000)] string ValidationFeedback = "");

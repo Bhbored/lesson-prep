@@ -13,5 +13,12 @@ public sealed record GeneratedLesson(
     List<LessonPhaseResult> Phases, string AssessmentSummary,
     List<string> ExpectedOutcomes, string TeacherNotes);
 
-public sealed record VariantDto(
-    Guid Id, int VariantNumber, int GenerationRound, AiProvider Provider, string Model, GeneratedLesson Lesson);
+public sealed record SessionReadyDto(
+    Guid VariantId,
+    int VariantNumber,
+    int GenerationRound,
+    int SessionNumber,
+    int SessionCount,
+    AiProvider Provider,
+    string Model,
+    GeneratedLesson Lesson);

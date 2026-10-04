@@ -11,17 +11,16 @@ export function useResultsPage() {
     navigate = useNavigate();
   const t = useI18n();
   const { setError } = useAlerts();
-  const { download: exportSelectedPdf, downloading } = useDownloadLesson(
-    state.activeVariant?.variantNumber,
-    () => setError(t.pdfFailed),
+  const { download: exportSessionPdf, downloadingKey } = useDownloadLesson(() =>
+    setError(t.pdfFailed),
   );
   return {
     ...state,
     ...useSettings(),
     t,
-    downloading,
+    downloadingKey,
     providerNames,
-    exportSelectedPdf,
+    exportSessionPdf,
     setTab: (tab: string) => navigate(`/${tab}`),
   };
 }

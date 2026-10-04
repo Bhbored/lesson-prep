@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { generationReducer } from "./generation";
 import type { GenerationState } from "./generation";
-import { snapshot, variant } from "@/test/fixtures";
+import { lesson, sessionReady, snapshot, variant } from "@/test/fixtures";
 
 const initial: GenerationState = {
   preparation: { ...snapshot, variants: [variant] },
@@ -12,7 +12,7 @@ const initial: GenerationState = {
   error: "",
 };
 describe("generation state", () => {
-  it("retains the previous round until the first validated replacement arrives", () => {
+  it("retains the previous round until the first validated session arrives", () => {
     let state = generationReducer(initial, { type: "start", regenerate: true });
     expect(state.preparation?.variants).toEqual([variant]);
     state = generationReducer(state, {
@@ -20,13 +20,73 @@ describe("generation state", () => {
       value: { event: "text_delta", data: { number: 1, text: "provisional" } },
     });
     expect(state.preparation?.variants).toEqual([variant]);
-    const next = { ...variant, id: "new", generationRound: 2 };
+    const next = {
+      ...sessionReady,
+      variantId: "new",
+      generationRound: 2,
+      lesson: { ...lesson, title: "Round two" },
+    };
     state = generationReducer(state, {
       type: "event",
-      value: { event: "variant_ready", data: next },
+      value: { event: "session_ready", data: next },
     });
-    expect(state.preparation?.variants).toEqual([next]);
+    expect(state.preparation?.variants).toEqual([
+      {
+        id: "new",
+        variantNumber: 1,
+        generationRound: 2,
+        provider: "DeepSeek",
+        model: "model",
+        sessions: [{ ...lesson, title: "Round two" }],
+      },
+    ]);
     expect(state.liveDraft).toBe("");
+  });
+  it("appends ordered sessions under the same variant", () => {
+    let state = generationReducer(
+      {
+        ...initial,
+        preparation: { ...snapshot, sessionCount: 2, variants: [] },
+        busy: true,
+      },
+      {
+        type: "event",
+        value: {
+          event: "session_ready",
+          data: {
+            ...sessionReady,
+            sessionNumber: 1,
+            sessionCount: 2,
+            lesson: { ...lesson, title: "Session one" },
+          },
+        },
+      },
+    );
+    state = generationReducer(state, {
+      type: "event",
+      value: {
+        event: "session_ready",
+        data: {
+          ...sessionReady,
+          sessionNumber: 2,
+          sessionCount: 2,
+          lesson: { ...lesson, title: "Session two" },
+        },
+      },
+    });
+    expect(state.preparation?.variants).toEqual([
+      {
+        id: variant.id,
+        variantNumber: 1,
+        generationRound: 1,
+        provider: "DeepSeek",
+        model: "model",
+        sessions: [
+          { ...lesson, title: "Session one" },
+          { ...lesson, title: "Session two" },
+        ],
+      },
+    ]);
   });
   it("retains validated partial results after failure or cancellation and clears drafts on retry", () => {
     let state = generationReducer(initial, { type: "start", regenerate: true });

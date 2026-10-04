@@ -38,7 +38,7 @@ it("exports an immutable RTL snapshot with the clicked result number and timesta
   const overlay = configureWorker();
   mock.save.mockResolvedValue(undefined);
 
-  const download = downloadLessonPdf(source, 2);
+  const download = downloadLessonPdf(source, 2, 1);
   source.textContent = "A different result selected while export loads";
   fonts.resolve();
   await download;
@@ -47,7 +47,9 @@ it("exports an immutable RTL snapshot with the clicked result number and timesta
   expect(snapshot.textContent).toBe("الدرس الأول");
   expect(snapshot.dir).toBe("rtl");
   expect(source.classList.contains("pdf-export")).toBe(false);
-  expect(mock.set.mock.calls[0][0].filename).toBe("result_2_2026-09-29T12-34-56-789Z.pdf");
+  expect(mock.set.mock.calls[0][0].filename).toBe(
+    "result_opt2_session1_2026-09-29T12-34-56-789Z.pdf",
+  );
   expect(overlay.isConnected).toBe(false);
 });
 
@@ -56,7 +58,7 @@ it("removes the rendering overlay when PDF generation fails", async () => {
   const overlay = configureWorker();
   mock.save.mockRejectedValue(new Error("Canvas rendering failed"));
 
-  await expect(downloadLessonPdf(document.createElement("article"), 1)).rejects.toThrow("Canvas rendering failed");
+  await expect(downloadLessonPdf(document.createElement("article"), 1, 1)).rejects.toThrow("Canvas rendering failed");
 
   expect(overlay.isConnected).toBe(false);
 });

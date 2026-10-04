@@ -27,6 +27,7 @@ export const generateSchema = z
     totalDurationMinutes: z.number().int().min(10).max(240),
     sourceLanguage: languageSchema,
     variantCount: z.number().int().min(1).max(3),
+    sessionCount: z.number().int().min(1).max(6),
     provider: providerSchema,
     model: z.string().min(1).max(150),
     credentialToken: z.string().min(1),

@@ -315,7 +315,20 @@ describe("persistent workspace state", () => {
     }));
     await act(async () => {
       deliver({ event: "preparation", data: newSnapshot });
-      for (const data of newVariants) deliver({ event: "variant_ready", data });
+      for (const data of newVariants)
+        deliver({
+          event: "session_ready",
+          data: {
+            variantId: data.id,
+            variantNumber: data.variantNumber,
+            generationRound: data.generationRound,
+            sessionNumber: 1,
+            sessionCount: 1,
+            provider: data.provider,
+            model: data.model,
+            lesson: data.sessions[0],
+          },
+        });
       deliver({
         event: "complete",
         data: { preparationId: newSnapshot.preparationId, round: 1 },
@@ -436,7 +449,19 @@ describe("persistent workspace state", () => {
     expect(vi.mocked(generateLessons)).toHaveBeenCalledTimes(1);
     act(() => {
       deliver({ event: "preparation", data: snapshot });
-      deliver({ event: "variant_ready", data: variant });
+      deliver({
+        event: "session_ready",
+        data: {
+          variantId: variant.id,
+          variantNumber: variant.variantNumber,
+          generationRound: variant.generationRound,
+          sessionNumber: 1,
+          sessionCount: 1,
+          provider: variant.provider,
+          model: variant.model,
+          lesson: variant.sessions[0],
+        },
+      });
       deliver({
         event: "text_delta",
         data: { number: 2, text: "unvalidated draft" },
@@ -490,8 +515,17 @@ describe("persistent workspace state", () => {
     });
     act(() =>
       deliver({
-        event: "variant_ready",
-        data: { ...variant, id: "obsolete", generationRound: 2 },
+        event: "session_ready",
+        data: {
+          variantId: "obsolete",
+          variantNumber: variant.variantNumber,
+          generationRound: 2,
+          sessionNumber: 1,
+          sessionCount: 1,
+          provider: variant.provider,
+          model: variant.model,
+          lesson: variant.sessions[0],
+        },
       }),
     );
     expect(result.current.currentVariants).toEqual([variant]);

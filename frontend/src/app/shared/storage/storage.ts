@@ -114,5 +114,32 @@ export const loadPresets = () =>
       .refine((items) => items.every((item) => !item.isDefault)),
     [],
   );
+function migratePreparation(raw: unknown): unknown {
+  if (raw === null || typeof raw !== "object") return raw;
+  const value = raw as Record<string, unknown>;
+  const variants = Array.isArray(value.variants)
+    ? value.variants.map((item) => {
+        if (item === null || typeof item !== "object") return item;
+        const variant = item as Record<string, unknown>;
+        if (Array.isArray(variant.sessions)) return variant;
+        if (variant.lesson && typeof variant.lesson === "object") {
+          const { lesson, ...rest } = variant;
+          return { ...rest, sessions: [lesson] };
+        }
+        return variant;
+      })
+    : value.variants;
+  return {
+    ...value,
+    sessionCount:
+      typeof value.sessionCount === "number" ? value.sessionCount : 1,
+    variants,
+  };
+}
 export const loadPreparation = () =>
-  loadStored(storageKeys.preparation, preparationSchema.nullable(), null);
+  loadStored(
+    storageKeys.preparation,
+    preparationSchema.nullable(),
+    null,
+    migratePreparation,
+  );

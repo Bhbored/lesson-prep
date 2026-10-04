@@ -1,0 +1,18 @@
+---
+description: Never commit; never add or leave explanatory comments in code
+alwaysApply: true
+---
+
+# No commits, no comments
+
+## Git
+
+- Never create commits, stage files for commit, or push.
+- The user commits. Do not offer to commit unless they explicitly ask.
+
+## Comments
+
+- Do not add comments to new or edited code.
+- Do not leave leftover explanatory, narrating, or AI-style comments.
+- Prefer clear names and structure over comments.
+- Only keep a comment if it is required for a non-obvious constraint (legal, protocol, or a deliberate workaround) and the user already has that style in the file — still prefer zero comments by default.

@@ -26,34 +26,46 @@ export const snapshot: PreparationSnapshot = {
   sourceText:
     "Photosynthesis uses sunlight and water to help plants grow in the classroom.",
   preparedSourceText: "",
+  sessionCount: 1,
 };
 export const token = "header..iv.cipher.tag";
+export const lesson = {
+  title: "Plants",
+  topic: "Photosynthesis",
+  className: "Grade 7",
+  totalDurationMinutes: 45,
+  learningObjectives: ["Explain photosynthesis"],
+  requiredMaterials: ["Board"],
+  phases: preset.phases.map((phase) => ({
+    name: phase.name,
+    durationMinutes: phase.durationMinutes,
+    objective: "Learn",
+    teacherActions: ["Explain"],
+    studentActions: ["Practice"],
+    questions: [],
+    notes: "",
+  })),
+  assessmentSummary: "Exit ticket",
+  expectedOutcomes: ["Explain"],
+  teacherNotes: "",
+};
 export const variant: Variant = {
   id: "first",
   variantNumber: 1,
   generationRound: 1,
   provider: "DeepSeek",
   model: "model",
-  lesson: {
-    title: "Plants",
-    topic: "Photosynthesis",
-    className: "Grade 7",
-    totalDurationMinutes: 45,
-    learningObjectives: ["Explain photosynthesis"],
-    requiredMaterials: ["Board"],
-    phases: preset.phases.map((phase) => ({
-      name: phase.name,
-      durationMinutes: phase.durationMinutes,
-      objective: "Learn",
-      teacherActions: ["Explain"],
-      studentActions: ["Practice"],
-      questions: [],
-      notes: "",
-    })),
-    assessmentSummary: "Exit ticket",
-    expectedOutcomes: ["Explain"],
-    teacherNotes: "",
-  },
+  sessions: [lesson],
+};
+export const sessionReady = {
+  variantId: variant.id,
+  variantNumber: variant.variantNumber,
+  generationRound: variant.generationRound,
+  sessionNumber: 1,
+  sessionCount: 1,
+  provider: variant.provider,
+  model: variant.model,
+  lesson,
 };
 export function sse(event: string, data: unknown) {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;

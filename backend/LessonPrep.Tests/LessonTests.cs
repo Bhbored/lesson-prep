@@ -65,8 +65,23 @@ public sealed class LessonTests
     public void FlowRejectsMismatchedTotalAndOrder()
     {
         LessonValidator.ValidateFlow("Grade 7", 45, Flow, 3);
+        LessonValidator.ValidateFlow("Grade 7", 45, Flow, 3, 6);
         Assert.Throws<LessonValidationException>(() => LessonValidator.ValidateFlow("Grade 7", 40, Flow, 3));
         Assert.Throws<LessonValidationException>(() => LessonValidator.ValidateFlow("Grade 7", 45, [Flow[0], Flow[1] with { Order = 1 }, .. Flow[2..]], 3));
+        Assert.Throws<LessonValidationException>(() => LessonValidator.ValidateFlow("Grade 7", 45, Flow, 3, 0));
+        Assert.Throws<LessonValidationException>(() => LessonValidator.ValidateFlow("Grade 7", 45, Flow, 3, 7));
+    }
+
+    [Fact]
+    public void RegenerationSnapshotAcceptsSessionCountBounds()
+    {
+        var snapshot = new PreparationSnapshot(Guid.NewGuid(), "Grade 7", 45, "en", Flow.ToList(),
+            "Photosynthesis uses sunlight and water to make food.", "", 3);
+        GenerationService.ValidateSnapshot(snapshot, 2, 1);
+        Assert.Throws<LessonValidationException>(() =>
+            GenerationService.ValidateSnapshot(snapshot with { SessionCount = 0 }, 2, 1));
+        Assert.Throws<LessonValidationException>(() =>
+            GenerationService.ValidateSnapshot(snapshot with { SessionCount = 7 }, 2, 1));
     }
 
     [Fact]

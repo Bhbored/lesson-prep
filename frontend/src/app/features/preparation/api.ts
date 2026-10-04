@@ -21,6 +21,7 @@ export async function generateLessons(
     "totalDurationMinutes",
     "sourceLanguage",
     "variantCount",
+    "sessionCount",
     "provider",
     "model",
     "credentialToken",

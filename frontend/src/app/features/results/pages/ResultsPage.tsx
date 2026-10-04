@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
-import { LessonResult } from "../components/LessonResult";
+import { SessionCard } from "../components/SessionCard";
 import {
   ChevronRight,
-  Download,
   FileText,
   LoaderCircle,
   RefreshCw,
   FileClock,
 } from "lucide-react";
 import { useResultsPage } from "@/app/features/results/hooks/useResultsPage";
+
 export default function ResultsPage() {
   const model = useResultsPage();
   const {
@@ -24,33 +24,29 @@ export default function ResultsPage() {
     regenerate,
     liveDraft,
     cancel,
-    exportSelectedPdf,
-    downloading,
+    exportSessionPdf,
+    downloadingKey,
   } = model;
+  const sessionCount =
+    preparation?.sessionCount ?? activeVariant?.sessions.length ?? 1;
+
   return (
     <div className="page-content pt-8">
       <div className="section-head mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="eyebrow text-[11px] font-bold tracking-[0.14em] text-leaf-700 uppercase">{t.classroomOptions}</span>
-          <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">{t.results}</h1>
+          <span className="eyebrow text-[11px] font-bold tracking-[0.14em] text-leaf-700 uppercase">
+            {t.classroomOptions}
+          </span>
+          <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">
+            {t.results}
+          </h1>
           <p className="mt-1 text-sm text-muted">
             {preparation
-              ? `${preparation.className} · ${preparation.totalDurationMinutes} ${t.minutes}`
+              ? `${preparation.className} · ${preparation.totalDurationMinutes} ${t.minutes}${sessionCount > 1 ? ` · ${sessionCount} ${t.sessions}` : ""}`
               : t.emptyResults}
           </p>
         </div>
         <div className="detail-buttons flex flex-wrap gap-2">
-          {activeVariant && (
-            <button
-              className="secondary-button inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-leaf-800 hover:bg-leaf-50"
-              disabled={busy || downloading}
-              aria-busy={downloading}
-              onClick={exportSelectedPdf}
-            >
-              {downloading ? <LoaderCircle aria-hidden="true" size={16} className="animate-spin" /> : <Download aria-hidden="true" size={16} />}
-              {t.exportPdf}
-            </button>
-          )}
           {preparation && (
             <button
               className="secondary-button inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-leaf-800 hover:bg-leaf-50"
@@ -72,7 +68,7 @@ export default function ResultsPage() {
           <LoaderCircle aria-hidden="true" className="animate-spin" size={19} />
           <div>
             <strong className="block text-sm">
-              {stage === "variant"
+              {stage === "variant" || stage === "session"
                 ? `${t.generating} ${t.option}`
                 : t.processing}
             </strong>
@@ -81,7 +77,10 @@ export default function ResultsPage() {
               {settings.models[settings.provider]}
             </span>
           </div>
-          <button className="secondary-button small ms-auto inline-flex min-h-11 items-center justify-center rounded-lg border border-leaf-300 bg-white px-4 py-2 text-sm font-semibold text-leaf-800" onClick={cancel}>
+          <button
+            className="secondary-button small ms-auto inline-flex min-h-11 items-center justify-center rounded-lg border border-leaf-300 bg-white px-4 py-2 text-sm font-semibold text-leaf-800"
+            onClick={cancel}
+          >
             {t.cancel}
           </button>
         </div>
@@ -97,7 +96,9 @@ export default function ResultsPage() {
               <p className="mt-0.5 text-xs text-muted">{t.liveHelp}</p>
             </div>
           </div>
-          <pre className="max-h-56 overflow-auto break-words whitespace-pre-wrap rounded-lg bg-leaf-50 p-3 text-xs text-muted">{liveDraft}</pre>
+          <pre className="max-h-56 overflow-auto break-words whitespace-pre-wrap rounded-lg bg-leaf-50 p-3 text-xs text-muted">
+            {liveDraft}
+          </pre>
         </div>
       )}
       {currentVariants.length > 0 ? (
@@ -110,11 +111,42 @@ export default function ResultsPage() {
                 onClick={() => setActiveVariantId(variant.id)}
               >
                 {t.option} {variant.variantNumber}
-                <span className="w-full truncate text-xs font-normal text-muted">{variant.lesson.title}</span>
+                <span className="w-full truncate text-xs font-normal text-muted">
+                  {variant.sessions[0]?.title ??
+                    `${variant.sessions.length} ${t.sessions}`}
+                </span>
               </button>
             ))}
           </div>
-          {activeVariant && <LessonResult model={model} />}
+          {activeVariant && (
+            <div className="session-list">
+              {activeVariant.sessions.map((lesson, index) => {
+                const sessionNumber = index + 1;
+                const key = `${activeVariant.variantNumber}-${sessionNumber}`;
+                return (
+                  <SessionCard
+                    key={`${activeVariant.id}-${sessionNumber}`}
+                    lesson={lesson}
+                    sessionNumber={sessionNumber}
+                    sessionCount={
+                      preparation?.sessionCount ?? activeVariant.sessions.length
+                    }
+                    variantNumber={activeVariant.variantNumber}
+                    t={t}
+                    initiallyExpanded={index === 0}
+                    downloading={downloadingKey === key}
+                    onExport={(element) =>
+                      exportSessionPdf(
+                        element,
+                        activeVariant.variantNumber,
+                        sessionNumber,
+                      )
+                    }
+                  />
+                );
+              })}
+            </div>
+          )}
         </>
       ) : (
         !busy && (
@@ -123,7 +155,10 @@ export default function ResultsPage() {
               <FileText aria-hidden="true" size={34} />
             </div>
             <h2 className="max-w-72 text-lg font-semibold">{t.emptyResults}</h2>
-            <Link className="primary-button small inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-leaf-700 px-4 py-2 text-sm font-semibold text-white hover:bg-leaf-800" to="/prepare">
+            <Link
+              className="primary-button small inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-leaf-700 px-4 py-2 text-sm font-semibold text-white hover:bg-leaf-800"
+              to="/prepare"
+            >
               {t.prepare}
               <ChevronRight aria-hidden="true" size={17} />
             </Link>

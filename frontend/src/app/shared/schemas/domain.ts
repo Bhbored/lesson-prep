@@ -65,18 +65,28 @@ export const lessonSchema = z.object({
     .nullable()
     .transform((value) => value ?? ""),
 });
-// JsonStringEnumConverter emits PascalCase providers in backend responses.
+const providerResponseSchema = z.enum([
+  "OpenAi",
+  "Gemini",
+  "Anthropic",
+  "DeepSeek",
+  ...providerSchema.options,
+]);
 export const variantSchema = z.object({
   id: z.string().min(1),
   variantNumber: z.number().int().min(1).max(3),
   generationRound: z.number().int().positive(),
-  provider: z.enum([
-    "OpenAi",
-    "Gemini",
-    "Anthropic",
-    "DeepSeek",
-    ...providerSchema.options,
-  ]),
+  provider: providerResponseSchema,
+  model: z.string(),
+  sessions: z.array(lessonSchema),
+});
+export const sessionReadySchema = z.object({
+  variantId: z.string().min(1),
+  variantNumber: z.number().int().min(1).max(3),
+  generationRound: z.number().int().positive(),
+  sessionNumber: z.number().int().min(1).max(6),
+  sessionCount: z.number().int().min(1).max(6),
+  provider: providerResponseSchema,
   model: z.string(),
   lesson: lessonSchema,
 });
@@ -89,6 +99,7 @@ export const snapshotSchema = z
     phases: flowSchema,
     sourceText: z.string().min(30).max(200_000),
     preparedSourceText: z.string().max(60_000),
+    sessionCount: z.number().int().min(1).max(6).default(1),
   })
   .refine(
     (value) =>
@@ -119,10 +130,12 @@ export const statusSchema = z.object({
     "preparing_source",
     "generating",
     "variant",
+    "session",
     "retry",
   ]),
   round: z.number().int().optional(),
   number: z.number().int().optional(),
+  session: z.number().int().optional(),
   count: z.number().int().optional(),
 });
 export const generationEventSchema = z.discriminatedUnion("event", [
@@ -134,9 +147,13 @@ export const generationEventSchema = z.discriminatedUnion("event", [
   }),
   z.object({
     event: z.literal("text_delta"),
-    data: z.object({ number: z.number().int(), text: z.string() }),
+    data: z.object({
+      number: z.number().int(),
+      session: z.number().int().optional(),
+      text: z.string(),
+    }),
   }),
-  z.object({ event: z.literal("variant_ready"), data: variantSchema }),
+  z.object({ event: z.literal("session_ready"), data: sessionReadySchema }),
   z.object({
     event: z.literal("complete"),
     data: z.object({
@@ -150,7 +167,9 @@ export type Language = z.infer<typeof languageSchema>;
 export type Phase = z.infer<typeof phaseSchema>;
 export type Preset = z.infer<typeof presetSchema>;
 export type AiModel = z.infer<typeof modelSchema>;
+export type Lesson = z.infer<typeof lessonSchema>;
 export type Variant = z.infer<typeof variantSchema>;
+export type SessionReady = z.infer<typeof sessionReadySchema>;
 export type PreparationSnapshot = z.infer<typeof snapshotSchema>;
 export type Preparation = z.infer<typeof preparationSchema>;
 export type Settings = z.infer<typeof settingsSchema>;
