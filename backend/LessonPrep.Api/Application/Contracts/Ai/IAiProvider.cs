@@ -10,6 +10,8 @@ public interface IAiProvider
     Task<IReadOnlyList<AiModel>> ListModelsAsync(string apiKey, CancellationToken cancellationToken);
     IAsyncEnumerable<string> StreamLessonJsonAsync(string apiKey, string model, LessonAiRequest request, CancellationToken cancellationToken);
     Task<string> SummarizeChunkAsync(string apiKey, string model, string chunk, CancellationToken cancellationToken);
+    Task<string> GenerateJsonAsync(string apiKey, string model, string system, string user, JsonElement schema,
+        int maxTokens, CancellationToken cancellationToken);
     JsonElement TranslateTools(IReadOnlyList<AiToolDefinition> tools);
     IReadOnlyList<AiToolCall> ParseToolCalls(JsonElement response);
 }

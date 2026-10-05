@@ -2,9 +2,10 @@ export async function downloadLessonPdf(
   element: HTMLElement,
   variantNumber: number,
   sessionNumber: number,
+  kind = "result",
 ) {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const filename = `result_opt${variantNumber}_session${sessionNumber}_${timestamp}.pdf`;
+  const filename = `${kind}_opt${variantNumber}_session${sessionNumber}_${timestamp}.pdf`;
   const source = element.cloneNode(true) as HTMLElement;
   source.classList.add("pdf-export", "session-expanded");
   source.hidden = false;

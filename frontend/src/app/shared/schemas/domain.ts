@@ -80,6 +80,80 @@ export const variantSchema = z.object({
   model: z.string(),
   sessions: z.array(lessonSchema),
 });
+export const sessionToolSchema = z.enum(["worksheet", "quiz", "game"]);
+export const exerciseItemTypeSchema = z.enum([
+  "short",
+  "multiple_choice",
+  "true_false",
+  "fill_blank",
+]);
+export const exerciseItemSchema = z.object({
+  prompt: z.string().min(1),
+  type: exerciseItemTypeSchema,
+  options: z
+    .array(z.string())
+    .nullable()
+    .optional()
+    .transform((value) => value ?? []),
+  answer: z.string().min(1),
+  explanation: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((value) => value ?? ""),
+});
+export const exerciseSetSchema = z.object({
+  title: z.string().min(1),
+  instructions: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((value) => value ?? ""),
+  items: z.array(exerciseItemSchema).min(1).max(16),
+});
+export const gameQuestionSchema = z.object({
+  prompt: z.string().min(1),
+  options: z.array(z.string().min(1)).min(2).max(8),
+  correctIndex: z.number().int().min(0),
+  explanation: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((value) => value ?? ""),
+});
+export const gamePairSchema = z.object({
+  left: z.string().min(1),
+  right: z.string().min(1),
+});
+export const gameSchema = z
+  .object({
+    title: z.string().min(1),
+    kind: z.enum(["quiz", "matching"]),
+    quiz: z
+      .object({ questions: z.array(gameQuestionSchema) })
+      .nullable()
+      .optional(),
+    matching: z
+      .object({ pairs: z.array(gamePairSchema) })
+      .nullable()
+      .optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.kind === "quiz" && (value.quiz?.questions.length ?? 0) < 1) {
+      context.addIssue({
+        code: "custom",
+        path: ["quiz", "questions"],
+        message: "Quiz questions are required.",
+      });
+    }
+    if (value.kind === "matching" && (value.matching?.pairs.length ?? 0) < 2) {
+      context.addIssue({
+        code: "custom",
+        path: ["matching", "pairs"],
+        message: "Matching pairs are required.",
+      });
+    }
+  });
 export const sessionReadySchema = z.object({
   variantId: z.string().min(1),
   variantNumber: z.number().int().min(1).max(3),
@@ -171,6 +245,10 @@ export type AiModel = z.infer<typeof modelSchema>;
 export type Lesson = z.infer<typeof lessonSchema>;
 export type Variant = z.infer<typeof variantSchema>;
 export type SessionReady = z.infer<typeof sessionReadySchema>;
+export type SessionTool = z.infer<typeof sessionToolSchema>;
+export type ExerciseSet = z.infer<typeof exerciseSetSchema>;
+export type ExerciseItem = z.infer<typeof exerciseItemSchema>;
+export type Game = z.infer<typeof gameSchema>;
 export type PreparationSnapshot = z.infer<typeof snapshotSchema>;
 export type Preparation = z.infer<typeof preparationSchema>;
 export type Settings = z.infer<typeof settingsSchema>;

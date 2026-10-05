@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace LessonPrep.Api.Controllers.v1.Lessons;
 
-public sealed class LessonPreparationsController(GenerationService service) : BaseController
+public sealed class LessonPreparationsController(GenerationService service, SessionToolService tools) : BaseController
 {
     [HttpPost("generate")]
     [EnableRateLimiting("generation")]
@@ -24,4 +24,10 @@ public sealed class LessonPreparationsController(GenerationService service) : Ba
             request.CredentialToken,
             Response,
             cancellationToken);
+
+    [HttpPost("sessionTool")]
+    [EnableRateLimiting("generation")]
+    public async Task<IActionResult> SessionTool([FromBody] SessionToolRequest request,
+        CancellationToken cancellationToken) =>
+        Ok(await tools.CreateAsync(request, cancellationToken));
 }

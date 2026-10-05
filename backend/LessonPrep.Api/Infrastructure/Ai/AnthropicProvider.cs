@@ -89,4 +89,22 @@ public sealed class AnthropicProvider(IHttpClientFactory factory) : AiProviderBa
             .Where(item => item.GetProperty("type").GetString() == "text")
             .Select(item => item.GetProperty("text").GetString()));
     }
+
+    public override async Task<string> GenerateJsonAsync(string apiKey, string model, string system, string user,
+        JsonElement schema, int maxTokens, CancellationToken ct)
+    {
+        using var request = JsonPost("https://api.anthropic.com/v1/messages", new
+        {
+            model, max_tokens = maxTokens, system,
+            messages = new[] { new { role = "user", content = user } },
+            output_config = new { format = new { type = "json_schema", schema } }
+        }, apiKey, "x-api-key");
+        request.Headers.TryAddWithoutValidation("anthropic-version", "2023-06-01");
+        using var response = await Client.SendAsync(request, ct);
+        await EnsureSuccessAsync(response, ct);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStreamAsync(ct));
+        return string.Join("\n", doc.RootElement.GetProperty("content").EnumerateArray()
+            .Where(item => item.GetProperty("type").GetString() == "text")
+            .Select(item => item.GetProperty("text").GetString()));
+    }
 }

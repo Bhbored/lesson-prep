@@ -21,6 +21,9 @@ public abstract class AiProviderBase(IHttpClientFactory factory) : IAiProvider
     public abstract Task<string> SummarizeChunkAsync(string apiKey, string model, string chunk,
         CancellationToken cancellationToken);
 
+    public abstract Task<string> GenerateJsonAsync(string apiKey, string model, string system, string user,
+        JsonElement schema, int maxTokens, CancellationToken cancellationToken);
+
     public abstract JsonElement TranslateTools(IReadOnlyList<AiToolDefinition> tools);
     public abstract IReadOnlyList<AiToolCall> ParseToolCalls(JsonElement response);
 

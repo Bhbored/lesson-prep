@@ -72,4 +72,21 @@ public sealed class DeepSeekProvider(IHttpClientFactory factory) : AiProviderBas
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStreamAsync(ct));
         return OpenAiResponseText(doc.RootElement);
     }
+
+    public override async Task<string> GenerateJsonAsync(string apiKey, string model, string system, string user,
+        JsonElement schema, int maxTokens, CancellationToken ct)
+    {
+        using var request = JsonPost("https://api.deepseek.com/responses", new
+        {
+            model, instructions = system, input = user, max_output_tokens = maxTokens,
+            text = new
+            {
+                format = new { type = "json_schema", name = "session_tool", schema }
+            }
+        }, apiKey);
+        using var response = await Client.SendAsync(request, ct);
+        await EnsureSuccessAsync(response, ct);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStreamAsync(ct));
+        return OpenAiResponseText(doc.RootElement);
+    }
 }

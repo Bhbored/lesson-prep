@@ -170,6 +170,7 @@ public static class DIContainer
         services.AddSingleton<IOcrService, PaddleOcrEngine>();
         services.AddScoped<DocumentProcessor>();
         services.AddScoped<GenerationService>();
+        services.AddScoped<SessionToolService>();
         services.AddScoped<IAiProvider, OpenAiProvider>();
         services.AddScoped<IAiProvider, GeminiProvider>();
         services.AddScoped<IAiProvider, AnthropicProvider>();

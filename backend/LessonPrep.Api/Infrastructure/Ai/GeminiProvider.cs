@@ -108,4 +108,33 @@ public sealed class GeminiProvider(IHttpClientFactory factory) : AiProviderBase(
             .GetProperty("parts").EnumerateArray()
             .Where(item => item.TryGetProperty("text", out _)).Select(item => item.GetProperty("text").GetString()));
     }
+
+    public override async Task<string> GenerateJsonAsync(string apiKey, string model, string system, string user,
+        JsonElement schema, int maxTokens, CancellationToken ct)
+    {
+        using var request = JsonPost(
+            $"https://generativelanguage.googleapis.com/v1beta/models/{Uri.EscapeDataString(model)}:generateContent",
+            new
+            {
+                systemInstruction = new { parts = new[] { new { text = system } } },
+                contents = new[] { new { role = "user", parts = new[] { new { text = user } } } },
+                generationConfig = new
+                {
+                    maxOutputTokens = maxTokens,
+                    responseMimeType = "application/json",
+                    responseJsonSchema = schema
+                }
+            }, apiKey, "x-goog-api-key");
+        using var response = await Client.SendAsync(request, ct);
+        await EnsureSuccessAsync(response, ct);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStreamAsync(ct));
+        if (!doc.RootElement.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
+            throw new ProviderException("Gemini could not complete the response.");
+        var candidate = candidates[0];
+        if (candidate.TryGetProperty("finishReason", out var reason) &&
+            reason.GetString() is "SAFETY" or "RECITATION")
+            throw new ProviderException("Gemini could not complete the response.");
+        return string.Join("\n", candidate.GetProperty("content").GetProperty("parts").EnumerateArray()
+            .Where(item => item.TryGetProperty("text", out _)).Select(item => item.GetProperty("text").GetString()));
+    }
 }
