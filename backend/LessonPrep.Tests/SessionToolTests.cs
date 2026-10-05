@@ -51,12 +51,28 @@ public sealed class SessionToolTests
     public void PromptAndSchemaFollowTheRequestedTool()
     {
         var user = SessionToolPrompt.User("worksheet", Session(), "Plants use sunlight.", "Skip the appendix.", "ar");
-        Assert.Contains("practice worksheet", user, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("PRACTICE WORKSHEET", user, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Arabic", user);
         Assert.Contains("Skip the appendix.", user);
         Assert.Contains("Plants use sunlight.", user);
         Assert.Contains("items", SessionToolSchemas.ExerciseSet.GetRawText());
-        Assert.Contains("kind", SessionToolSchemas.Game.GetRawText());
+        Assert.Contains("adventure", SessionToolSchemas.Game.GetRawText());
+    }
+
+    [Theory]
+    [InlineData("Grade 2", "story_garden", "early")]
+    [InlineData("Grade 7", "quest_atlas", "middle")]
+    [InlineData("Terminale", "signal_lab", "upper")]
+    public void GameDesignPresetFollowsTheClass(string className, string presetId, string band)
+    {
+        var preset = GameDesignPresets.ForClass(className);
+        Assert.Equal(presetId, preset.Id);
+        Assert.Equal(band, preset.Band);
+        var user = SessionToolPrompt.User("game", Session() with { ClassName = className }, "Plants use sunlight.", "",
+            "en", preset);
+        Assert.Contains(preset.Name, user);
+        Assert.Contains(preset.Kind, user);
+        Assert.Contains("classroom GAME", SessionToolPrompt.GameSystem);
     }
 
     [Fact]
@@ -82,8 +98,11 @@ public sealed class SessionToolTests
         var (service, token) = CreateService(provider);
         var result = await service.CreateAsync(Request("game", token), CancellationToken.None);
         var game = Assert.IsType<GameDto>(result);
-        Assert.Equal("quiz", game.Kind);
-        Assert.Contains("kind", provider.LastSchema.GetRawText());
+        Assert.Equal("matching", game.Kind);
+        Assert.Equal("quest_atlas", game.PresetId);
+        Assert.Equal("middle", game.Band);
+        Assert.Contains("matching", provider.LastSchema.GetRawText());
+        Assert.Contains("Quest Atlas", provider.LastUser);
     }
 
     [Fact]
@@ -131,7 +150,7 @@ public sealed class SessionToolTests
     {
         Assert.Throws<LessonValidationException>(() => SessionToolValidator.Parse("quiz", "{}"));
         Assert.Throws<LessonValidationException>(() =>
-            SessionToolValidator.Parse("game", """{"title":"G","kind":"quiz","quiz":{"questions":[]},"matching":{"pairs":[]}}"""));
+            SessionToolValidator.Parse("game", """{"title":"G","kind":"matching","hook":"","host":"","adventure":{"stages":[]},"matching":{"pairs":[]},"race":{"rounds":[]}}"""));
         var set = SessionToolValidator.ParseExerciseSet(ValidWorksheet());
         Assert.Equal(2, set.Items.Count);
     }
@@ -190,14 +209,18 @@ public sealed class SessionToolTests
     private static string ValidGame() =>
         """
         {
-          "title": "Leaf quiz",
-          "kind": "quiz",
-          "quiz": {
-            "questions": [
-              { "prompt": "What do plants need?", "options": ["Rocks", "Sunlight"], "correctIndex": 1, "explanation": "" }
+          "title": "Leaf hunt",
+          "kind": "matching",
+          "hook": "Stamp the map.",
+          "host": "Navigator",
+          "adventure": { "stages": [] },
+          "matching": {
+            "pairs": [
+              { "left": "Sun", "right": "Energy" },
+              { "left": "Leaf", "right": "Food" }
             ]
           },
-          "matching": { "pairs": [] }
+          "race": { "rounds": [] }
         }
         """;
 

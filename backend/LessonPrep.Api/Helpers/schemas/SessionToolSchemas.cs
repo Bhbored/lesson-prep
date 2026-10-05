@@ -37,12 +37,14 @@ public static class SessionToolSchemas
           "additionalProperties": false,
           "properties": {
             "title": { "type": "string" },
-            "kind": { "type": "string", "enum": ["quiz", "matching"] },
-            "quiz": {
+            "kind": { "type": "string", "enum": ["adventure", "matching", "race"] },
+            "hook": { "type": "string" },
+            "host": { "type": "string" },
+            "adventure": {
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "questions": {
+                "stages": {
                   "type": "array",
                   "items": {
                     "type": "object",
@@ -51,13 +53,14 @@ public static class SessionToolSchemas
                       "prompt": { "type": "string" },
                       "options": { "type": "array", "items": { "type": "string" } },
                       "correctIndex": { "type": "integer" },
-                      "explanation": { "type": "string" }
+                      "success": { "type": "string" },
+                      "miss": { "type": "string" }
                     },
-                    "required": ["prompt", "options", "correctIndex", "explanation"]
+                    "required": ["prompt", "options", "correctIndex", "success", "miss"]
                   }
                 }
               },
-              "required": ["questions"]
+              "required": ["stages"]
             },
             "matching": {
               "type": "object",
@@ -77,9 +80,30 @@ public static class SessionToolSchemas
                 }
               },
               "required": ["pairs"]
+            },
+            "race": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "rounds": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "prompt": { "type": "string" },
+                      "options": { "type": "array", "items": { "type": "string" } },
+                      "correctIndex": { "type": "integer" },
+                      "explanation": { "type": "string" }
+                    },
+                    "required": ["prompt", "options", "correctIndex", "explanation"]
+                  }
+                }
+              },
+              "required": ["rounds"]
             }
           },
-          "required": ["title", "kind", "quiz", "matching"]
+          "required": ["title", "kind", "hook", "host", "adventure", "matching", "race"]
         }
         """).RootElement.Clone();
 }

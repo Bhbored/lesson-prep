@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using System.Text;
 using LessonPrep.Api.Application.Contracts.Documents;
 using LessonPrep.Api.Application.Exceptions;
@@ -24,19 +25,29 @@ public static class PdfToText
                          native.Count(c => c == '\ufffd') < native.Length / 20;
             string pageText;
             if (usable) pageText = native;
+            else if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+            {
+                pageText = await ocr.ReadImageAsync(RenderPagePng(bytes, index), language, ct);
+                ocrCount++;
+            }
             else
             {
-                if (!OperatingSystem.IsWindows() && !OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
-                    throw new DocumentException("PDF rendering is unavailable on this operating system.");
-                using var image = new MemoryStream();
-                Conversion.SavePng(image, bytes, index, options: new RenderOptions(Dpi: 220));
-                pageText = await ocr.ReadImageAsync(image.ToArray(), language, ct);
-                ocrCount++;
+                throw new DocumentException("PDF rendering is unavailable on this operating system.");
             }
 
             output.AppendLine($"[Page {index + 1}]").AppendLine(pageText).AppendLine();
         }
 
         return (output.ToString(), pdf.NumberOfPages, ocrCount);
+    }
+
+    [SupportedOSPlatform("windows")]
+    [SupportedOSPlatform("linux")]
+    [SupportedOSPlatform("macos")]
+    private static byte[] RenderPagePng(byte[] bytes, int pageIndex)
+    {
+        using var image = new MemoryStream();
+        Conversion.SavePng(image, bytes, pageIndex, options: new RenderOptions(Dpi: 220));
+        return image.ToArray();
     }
 }

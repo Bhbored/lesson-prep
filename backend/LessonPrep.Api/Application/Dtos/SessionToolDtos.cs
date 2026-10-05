@@ -29,14 +29,28 @@ public sealed record GameQuestionDto(
     int CorrectIndex,
     string? Explanation);
 
+public sealed record GameStageDto(
+    string Prompt,
+    List<string> Options,
+    int CorrectIndex,
+    string? Success,
+    string? Miss);
+
 public sealed record GamePairDto(string Left, string Right);
 
-public sealed record GameQuizDto(List<GameQuestionDto> Questions);
+public sealed record GameAdventureDto(List<GameStageDto> Stages);
 
 public sealed record GameMatchingDto(List<GamePairDto> Pairs);
+
+public sealed record GameRaceDto(List<GameQuestionDto> Rounds);
 
 public sealed record GameDto(
     string Title,
     string Kind,
-    GameQuizDto? Quiz,
-    GameMatchingDto? Matching);
+    string? Hook,
+    string? Host,
+    string? PresetId,
+    string? Band,
+    GameAdventureDto? Adventure,
+    GameMatchingDto? Matching,
+    GameRaceDto? Race);

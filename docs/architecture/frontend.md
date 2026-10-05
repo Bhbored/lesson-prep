@@ -1,4 +1,4 @@
-# Frontend architecture
+﻿# Frontend architecture
 
 LessonPrep uses React, TypeScript, Vite, React Router, TanStack Query, Zod, and Tailwind CSS v4 through the first-party Vite plugin. TypeScript strict checking is enabled; `@/` resolves to `frontend/src/` in TypeScript, Vite, and Vitest.
 
@@ -10,7 +10,7 @@ LessonPrep uses React, TypeScript, Vite, React Router, TanStack Query, Zod, and 
 | `app/features/preparation/` | Upload form, request schemas/adapters, generation reducer |
 | `app/features/presets/` | Lesson-flow list and phase editor |
 | `app/features/settings/` | Display language, credentials, provider/model selection |
-| `app/features/results/` | Alternative selection, lesson display, PDF downloads |
+| `app/features/results/` | Alternative/session selection, lesson display, PDF downloads, session tools (worksheet / quiz / game) |
 | `app/providers/` | Query client, shared alerts, settings, translations, presets, preparation state |
 | `app/routes/AppRoutes.tsx` | Lazy page imports, loading fallback, redirects |
 | `app/shell/` | Sidebar navigation, topbar, shared alerts, page outlet |
@@ -32,7 +32,17 @@ Read queries forward TanStack Query's cancellation signal to fetch and retry a t
 
 `app/providers/preparation.ts` owns the form and a single active `AbortController`; `features/preparation/state/generation.ts` owns reducer transitions. Starting generation navigates to Results. Additional starts are rejected while a request is active. Navigation continues the request; explicit cancellation and root-provider teardown abort it. Events from obsolete or aborted requests are ignored.
 
-During regeneration, the previous round stays visible until the first validated `variant_ready` arrives. That event replaces the previous alternatives with the new round, and subsequent alternatives join it. Failure or cancellation preserves validated partial results. A new upload creates a new preparation rather than another round of the old one. Provisional text is cleared on variant/retry status changes, selection changes, failure, cancellation, and completion, and is never stored.
+During regeneration, the previous round stays visible until the first validated `session_ready` arrives. That event replaces the previous alternatives with the new round, and subsequent sessions/alternatives join it. Failure or cancellation preserves validated partial results. A new upload creates a new preparation rather than another round of the old one. Provisional text is cleared on variant/session/retry status changes, selection changes, failure, cancellation, and completion, and is never stored.
+
+## Session tools
+
+Each session card can request a worksheet, quiz, or interactive game through `features/results/api.ts` (`generateSessionTool`). `useSessionTools` owns per-card loading and error state. Results open in `SessionToolSheet` with a loading animation, then preview plus open-in-new-tab and save actions.
+
+- Worksheets and quizzes share exercise-set JSON; `buildExerciseHtml` renders notebook vs exit-ticket HTML layouts.
+- Games use adventure / matching / race payloads; `buildGameHtml` embeds escaped data in an app-owned HTML template (choice answers are shuffled on the server before return).
+- `sessionToolDocument` helpers create blob URLs for preview and download.
+
+Tool output is not written to local storage by default; saving HTML (or printing/PDF for exercises) is the persistence path. Requests need the same BYOK credential token and model as generation.
 
 ## Shared utilities and validation
 
@@ -47,7 +57,7 @@ The two transport classes perform no requests or assertions during module import
 
 Display language is English, Arabic, or French. Interface copy lives in `app/shared/i18n/en.json`, `ar.json`, and `fr.json`, with matching keys checked by TypeScript and tests. Arabic sets the document language and RTL direction; English and French use LTR. Source/output language is independently English, Arabic, or French. Tailwind utilities style the screens, including responsive and RTL layout. CSS remains for theme tokens, global focus and reduced-motion behavior, and print/PDF output; semantic class names on result elements provide print/PDF targets. The palette uses sage surfaces and a deep green action color; provider logos keep their own brand colors. The paper illustration and numbered lesson phases tie the visual style to classroom planning. Controls have labels, inline form errors, visible keyboard focus, a skip link, and reduced-motion styles.
 
-Results displays the selected validated lesson. Export PDF downloads an A4 PDF directly using the lazily loaded `html2pdf.js` library, with the filename `result_<variantNumber>_<UTC timestamp>.pdf`. `useDownloadLesson` prevents concurrent exports and reports failures; `downloadLessonPdf` snapshots only the selected lesson and uses scoped PDF styles and page-break rules. Browser-rendered text preserves Arabic shaping and layout; the PDF contains rendered images rather than searchable text. Browser download preferences determine the destination and may still prompt for a location. Native browser printing remains supported by the print stylesheet.
+Results displays the selected validated session under its alternative. Export PDF downloads an A4 PDF directly using the lazily loaded `html2pdf.js` library, with the filename `result_<variantNumber>_<UTC timestamp>.pdf`. `useDownloadLesson` prevents concurrent exports and reports failures; `downloadLessonPdf` snapshots only the selected session and uses scoped PDF styles and page-break rules. Browser-rendered text preserves Arabic shaping and layout; the PDF contains rendered images rather than searchable text. Browser download preferences determine the destination and may still prompt for a location. Native browser printing remains supported by the print stylesheet. Session-tool HTML downloads use the same browser download path.
 
 ## Checks
 

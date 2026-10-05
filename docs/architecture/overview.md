@@ -1,4 +1,4 @@
-# Architecture and request flow
+﻿# Architecture and request flow
 
 LessonPrep is an account-free web application with two runtime components. It has no database.
 
@@ -14,12 +14,13 @@ API routes are versioned under `lessonprep/v1.0/...` (see `Controllers/BaseContr
 ## Generation request
 
 1. The browser posts the provider API key once to `POST /lessonprep/v1.0/Ai/credentials` over HTTPS. The API returns a JWE credential token that is stored locally.
-2. The teacher uploads PDF/TXT/CSV material to `POST /lessonprep/v1.0/LessonPreparations/generate` with class, duration, phase selection, provider, model, and credential token.
+2. The teacher uploads PDF/TXT/CSV material to `POST /lessonprep/v1.0/LessonPreparations/generate` with class, duration, phase selection, optional material notes, session count (1–6), variant count (1–3), provider, model, and credential token.
 3. ASP.NET parses TXT/CSV directly. For each PDF page, it reads embedded text or renders and recognizes weak-text pages in process.
-4. ASP.NET normalizes and bounds the source, validates the phase timings, and emits a `preparation` SSE event containing source text and an ordered phase snapshot. React stores this latest snapshot in browser local storage.
+4. ASP.NET normalizes and bounds the source, validates the phase timings, and emits a `preparation` SSE event containing source text, session count, material notes, and an ordered phase snapshot. React stores this latest snapshot in browser local storage.
 5. ASP.NET decrypts the credential token in memory and calls the chosen AI provider. Adapters translate one lesson prompt and schema into provider-specific requests and streaming responses.
-6. The API emits status, provisional text deltas, validated alternatives, and completion events. React stores only completed alternatives and displays provisional text separately.
+6. The API emits status, provisional text deltas, validated `session_ready` events (one per session under each alternative), and completion. React stores completed sessions under each variant and displays provisional text separately.
 7. Regeneration sends the browser's saved source/phase snapshot back to ASP.NET with the provider/model currently selected in Settings. Nothing needs to be looked up on the server.
+8. Per-session tools (`worksheet`, `quiz`, `game`) call `POST /lessonprep/v1.0/LessonPreparations/sessionTool` with the snapshot and one session. The API returns ephemeral JSON; the SPA renders it in a sheet and can open or save HTML. Nothing is persisted server-side.
 
 ## Main code locations
 
@@ -29,12 +30,14 @@ API routes are versioned under `lessonprep/v1.0/...` (see `Controllers/BaseContr
 - `backend/LessonPrep.Api/Application/Contracts/Lessons/StandardLessonFlow.cs` — static default preset.
 - `backend/LessonPrep.Api/Helpers/documents/` — upload validation, CSV/PDF extraction, OCR orchestration.
 - `backend/LessonPrep.Api/Infrastructure/OCR/PaddleOcrEngine.cs` — singleton with lazy queues for English, Arabic, and French OCR.
-- `backend/LessonPrep.Api/Infrastructure/Ai/` — four provider adapters behind `IAiProvider`.
+- `backend/LessonPrep.Api/Infrastructure/Ai/` — four provider adapters behind `IAiProvider` (streaming lessons and `GenerateJsonAsync` for session tools).
 - `backend/LessonPrep.Api/Helpers/prompts/LessonPrompt.cs` and `Helpers/schemas/LessonSchema.cs` — shared lesson prompt and JSON schema.
-- `backend/LessonPrep.Api/Application/Services/Lessons/GenerationService.cs` — snapshots, generation, validation, and SSE orchestration.
+- `backend/LessonPrep.Api/Helpers/prompts/SessionToolPrompt.cs`, `Helpers/schemas/SessionToolSchemas.cs`, and `Helpers/GameDesignPresets.cs` — session-tool prompts, schemas, and class-level game design bands.
+- `backend/LessonPrep.Api/Application/Services/Lessons/GenerationService.cs` — snapshots, multi-session generation, validation, and SSE orchestration.
+- `backend/LessonPrep.Api/Application/Services/Lessons/SessionToolService.cs` — ephemeral worksheet, quiz, and game generation.
 - `backend/LessonPrep.Api/Infrastructure/Security/CredentialTokenService.cs` — JWE credential token issue/open.
 - `frontend/src/app/App.tsx` — provider and route composition.
-- `frontend/src/app/features/` — preparation, lesson flows, settings, and results pages, components, hooks, and API adapters.
+- `frontend/src/app/features/` — preparation, lesson flows, settings, and results pages (including session tools), components, hooks, and API adapters.
 - `frontend/src/app/providers/` — settings, preset drafts, preparation state, generation lifecycle, and query caching.
 - `frontend/src/app/shared/api/` — schema-validated `ApiClient` and streaming `SseClient`.
 - `frontend/src/app/shared/storage/storage.ts` — validated browser storage, provider migrations, and recovery backups.

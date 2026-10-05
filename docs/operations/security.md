@@ -4,7 +4,7 @@
 
 1. Over HTTPS, the browser posts the provider and plaintext API key once to `POST /lessonprep/v1.0/Ai/credentials`.
 2. The API encrypts the key into a compact JWE token (`alg: dir`, `enc: A256GCM`) using `Crypto:TokenSecret` (a 32-byte secret). The payload binds the provider so a DeepSeek token cannot be reused as OpenAI.
-3. Only the token string is kept in browser local storage and sent back on model-list (`X-Provider-Token` header) or generation (`credentialToken`) requests.
+3. Only the token string is kept in browser local storage and sent back on model-list (`X-Provider-Token` header) or generation / regenerate / session-tool (`credentialToken`) requests.
 4. ASP.NET decrypts the token in memory, passes the key to the provider request, and does not store credentials on the server or in application logs.
 5. The token header includes a `kid` fingerprint of the secret. Rotating `Crypto:TokenSecret` changes that ID; old tokens are rejected and users must enter keys again.
 
@@ -18,7 +18,7 @@ The token protects the key at rest in local storage from casual inspection, but 
 
 - No authentication or authorization exists. Anyone who can call generation with their own credential can trigger provider requests. Saved preparations are kept only in the teacher's browser; the API has no preparation read endpoint.
 - There are no per-user quotas or ownership rules.
-- Fixed-window IP rate limits do exist (120 reads, 30 credential/model requests, and 10 generation requests per minute by default). Forwarded headers restore client IPs before rate limiting, but only from trusted ingress. Keep `ReverseProxy:TrustAll` disabled for directly exposed Kestrel; set it to `true` only behind Render's managed ingress, with `CF-Connecting-IP` as the client-IP header. These rate limits are per process, so replicas do not share counters. See [Hosting](../deployment/hosting.md) for the trust boundary and platform setup.
+- Fixed-window IP rate limits do exist (120 reads, 30 credential/model requests, and 10 generation/sessionTool requests per minute by default). Forwarded headers restore client IPs before rate limiting, but only from trusted ingress. Keep `ReverseProxy:TrustAll` disabled for directly exposed Kestrel; set it to `true` only behind Render's managed ingress, with `CF-Connecting-IP` as the client-IP header. These rate limits are per process, so replicas do not share counters. See [Hosting](../deployment/hosting.md) for the trust boundary and platform setup.
 - OCR executes native code inside the API process. Keep native packages updated and provision memory/CPU for scanned documents; models are embedded and require no runtime downloads.
 - Browser local storage contains source material and validated lessons. Anyone with access to that browser profile can read them, and clearing browser data removes them.
 - Logs include operational request information. Continue to avoid logging credentials, complete source material, or provider prompts containing uploaded material.

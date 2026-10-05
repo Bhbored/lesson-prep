@@ -21,3 +21,94 @@
   --font-sans: "DM Sans", system-ui, sans-serif;
   --font-display: "Outfit", "DM Sans", system-ui, sans-serif;
 }
+
+.tool-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: end center;
+  padding: 0;
+  background: rgba(18, 32, 24, 0.4);
+  backdrop-filter: blur(8px);
+}
+.tool-sheet {
+  width: min(34rem, 100%);
+  max-height: min(36rem, 92vh);
+  overflow: auto;
+  padding: 1.4rem 1.35rem 1.6rem;
+  border-radius: 24px 24px 0 0;
+  background: #fff;
+  box-shadow: 0 -16px 50px rgba(20, 40, 28, 0.16);
+}
+@media (min-width: 720px) {
+  .tool-sheet-backdrop {
+    place-items: center;
+    padding: 1.5rem;
+  }
+  .tool-sheet {
+    border-radius: 24px;
+    box-shadow: 0 24px 60px rgba(20, 40, 28, 0.18);
+  }
+}
+.think {
+  position: relative;
+  width: 5.5rem;
+  height: 5.5rem;
+}
+.think-core {
+  position: absolute;
+  inset: 1.05rem;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 30%, #fff 0%, transparent 42%),
+    linear-gradient(160deg, #cfe8d2, #3b7d52 58%, #1e4c34);
+  box-shadow: 0 0 0 8px rgba(57, 125, 83, 0.08), 0 12px 30px rgba(32, 85, 54, 0.2);
+  animation: think-breathe 2.6s ease-in-out infinite;
+}
+.think-spark,
+.think-spark-b,
+.think-spark-c {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  animation: think-orbit 3.4s linear infinite;
+}
+.think-spark::after,
+.think-spark-b::after,
+.think-spark-c::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(50% - 4px);
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #205536;
+}
+.think-spark-b {
+  animation-duration: 4.2s;
+  animation-direction: reverse;
+}
+.think-spark-c {
+  animation-duration: 5s;
+}
+.think-spark-b::after {
+  background: #7eb48a;
+  width: 6px;
+  height: 6px;
+}
+.think-spark-c::after {
+  background: #c9a24a;
+}
+@keyframes think-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes think-breathe {
+  50% {
+    transform: scale(0.92);
+    filter: saturate(1.15);
+  }
+}

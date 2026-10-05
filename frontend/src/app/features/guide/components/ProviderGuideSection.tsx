@@ -25,7 +25,7 @@ export function ProviderGuideSection({
   return (
     <section
       id={`guide-${provider}`}
-      className="panel guide-provider scroll-mt-24 mb-6 max-w-5xl rounded-xl border border-line bg-paper p-5 sm:p-6"
+      className="panel guide-provider rounded-xl border border-line bg-paper p-5 sm:p-6"
       aria-labelledby={`guide-heading-${provider}`}
     >
       <header className="mb-5 flex flex-wrap items-center gap-3">

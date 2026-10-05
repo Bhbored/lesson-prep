@@ -121,6 +121,21 @@ export const gameQuestionSchema = z.object({
     .optional()
     .transform((value) => value ?? ""),
 });
+export const gameStageSchema = z.object({
+  prompt: z.string().min(1),
+  options: z.array(z.string().min(1)).min(2).max(8),
+  correctIndex: z.number().int().min(0),
+  success: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((value) => value ?? ""),
+  miss: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((value) => value ?? ""),
+});
 export const gamePairSchema = z.object({
   left: z.string().min(1),
   right: z.string().min(1),
@@ -128,22 +143,46 @@ export const gamePairSchema = z.object({
 export const gameSchema = z
   .object({
     title: z.string().min(1),
-    kind: z.enum(["quiz", "matching"]),
-    quiz: z
-      .object({ questions: z.array(gameQuestionSchema) })
+    kind: z.enum(["adventure", "matching", "race"]),
+    hook: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((value) => value ?? ""),
+    host: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((value) => value ?? ""),
+    presetId: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((value) => value ?? ""),
+    band: z
+      .enum(["early", "middle", "upper"])
+      .nullable()
+      .optional()
+      .transform((value) => value ?? "middle"),
+    adventure: z
+      .object({ stages: z.array(gameStageSchema) })
       .nullable()
       .optional(),
     matching: z
       .object({ pairs: z.array(gamePairSchema) })
       .nullable()
       .optional(),
+    race: z
+      .object({ rounds: z.array(gameQuestionSchema) })
+      .nullable()
+      .optional(),
   })
   .superRefine((value, context) => {
-    if (value.kind === "quiz" && (value.quiz?.questions.length ?? 0) < 1) {
+    if (value.kind === "adventure" && (value.adventure?.stages.length ?? 0) < 1) {
       context.addIssue({
         code: "custom",
-        path: ["quiz", "questions"],
-        message: "Quiz questions are required.",
+        path: ["adventure", "stages"],
+        message: "Adventure stages are required.",
       });
     }
     if (value.kind === "matching" && (value.matching?.pairs.length ?? 0) < 2) {
@@ -151,6 +190,13 @@ export const gameSchema = z
         code: "custom",
         path: ["matching", "pairs"],
         message: "Matching pairs are required.",
+      });
+    }
+    if (value.kind === "race" && (value.race?.rounds.length ?? 0) < 1) {
+      context.addIssue({
+        code: "custom",
+        path: ["race", "rounds"],
+        message: "Race rounds are required.",
       });
     }
   });

@@ -10,8 +10,7 @@ import {
 import type { Lesson, SessionTool } from "@/app/shared/schemas/domain";
 import type { useI18n } from "@/app/providers/i18n";
 import { LessonResult } from "./LessonResult";
-import { ExerciseSetView } from "./ExerciseSetView";
-import { GamePanel } from "./GamePanel";
+import { SessionToolSheet } from "./SessionToolSheet";
 import { useSessionTools } from "../hooks/useSessionTools";
 
 interface SessionCardProps {
@@ -85,10 +84,7 @@ export function SessionCard({
               aria-busy={tools.loading === name}
               aria-label={t[name]}
               title={t[name]}
-              onClick={() => {
-                setExpanded(true);
-                tools.generate(name);
-              }}
+              onClick={() => tools.generate(name)}
             >
               {tools.loading === name ? (
                 <LoaderCircle
@@ -141,41 +137,10 @@ export function SessionCard({
               t={t}
               eyebrow={`${t.option} ${variantNumber} · ${label}`}
             />
-            {(tools.loading ||
-              tools.failed ||
-              tools.exercise ||
-              tools.game) && (
-              <div className="session-tools mt-6 border-t border-line pt-4">
-                {tools.loading && (
-                  <p className="text-sm text-muted">{t.generatingTool}</p>
-                )}
-                {tools.failed && (
-                  <p className="text-sm text-rose-700" role="alert">
-                    {tools.failed}
-                  </p>
-                )}
-                {tools.exercise &&
-                  (tools.tool === "worksheet" || tools.tool === "quiz") && (
-                    <ExerciseSetView
-                      set={tools.exercise}
-                      t={t}
-                      kind={tools.tool}
-                      downloading={tools.exporting}
-                      onExport={tools.exportExercise}
-                    />
-                  )}
-                {tools.game && tools.tool === "game" && (
-                  <GamePanel
-                    game={tools.game}
-                    t={t}
-                    onDownload={tools.exportGame}
-                  />
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>
+      <SessionToolSheet tools={tools} t={t} />
     </section>
   );
 }

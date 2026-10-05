@@ -56,19 +56,20 @@ it("posts a session tool request and validates the exercise response", async () 
 
 it("validates a game response", async () => {
   const game = {
-    title: "Leaf quiz",
-    kind: "quiz",
-    quiz: {
-      questions: [
-        {
-          prompt: "What do plants need?",
-          options: ["Rocks", "Sunlight"],
-          correctIndex: 1,
-          explanation: "",
-        },
+    title: "Leaf hunt",
+    kind: "matching",
+    hook: "Stamp the map.",
+    host: "Navigator",
+    presetId: "quest_atlas",
+    band: "middle",
+    adventure: { stages: [] },
+    matching: {
+      pairs: [
+        { left: "Sun", right: "Energy" },
+        { left: "Leaf", right: "Food" },
       ],
     },
-    matching: { pairs: [] },
+    race: { rounds: [] },
   };
   vi.stubGlobal(
     "fetch",
@@ -81,5 +82,5 @@ it("validates a game response", async () => {
   );
   await expect(
     generateSessionTool("game", lesson, snapshot, "deepSeek", "model", token),
-  ).resolves.toMatchObject({ title: "Leaf quiz", kind: "quiz" });
+  ).resolves.toMatchObject({ title: "Leaf hunt", kind: "matching" });
 });

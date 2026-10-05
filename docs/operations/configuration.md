@@ -1,4 +1,4 @@
-# Configuration and limits
+﻿# Configuration and limits
 
 ASP.NET Core reads standard JSON configuration and environment variables. Environment variables use `__` to represent a nested `:` section.
 
@@ -9,7 +9,7 @@ ASP.NET Core reads standard JSON configuration and environment variables. Enviro
 | `Frontend__Origins__0` | First allowed browser origin (use `__1`, `__2`, etc. for more) | `http://localhost:5173` |
 | `RateLimits__Reads__PermitLimit` / `WindowSeconds` | IP rate limit for general reads | `120` / `60` |
 | `RateLimits__Models__PermitLimit` / `WindowSeconds` | IP rate limit for credentials + model listing | `30` / `60` |
-| `RateLimits__Generation__PermitLimit` / `WindowSeconds` | IP rate limit for generate/regenerate | `10` / `60` |
+| `RateLimits__Generation__PermitLimit` / `WindowSeconds` | IP rate limit for generate / regenerate / sessionTool | `10` / `60` |
 | `ASPNETCORE_ENVIRONMENT` | ASP.NET environment | `Development` from local launch profile |
 | `ASPNETCORE_URLS` | Kestrel bind URL(s) when set by the host | HTTPS launch profile uses `https://localhost:7132;http://localhost:5132` |
 | `ReverseProxy__TrustAll` | Trust changing managed-ingress addresses; opt in only behind controlled ingress | `false` |
@@ -45,10 +45,13 @@ Serilog writes to standard output, which Render captures. `/health` and `/health
 - 200,000 characters maximum normalized source text.
 - Lesson duration 10–240 minutes; 1–12 phases with contiguous orders, names up to 80 characters, positive durations, and a total matching the lesson duration.
 - Class name up to 100 characters; model ID up to 150; generation round 1–10,000.
+- At most 3 alternatives per run; 1–6 sessions per alternative (`sessionCount`).
+- Optional `materialNote` up to 2,000 characters (passed into generation and session-tool prompts).
 - Source and frontend display languages `en`, `ar`, and `fr`.
 - Sources over 80,000 characters are summarized in chunks of at most 20,000 characters; each summary is at most 6,000 characters and the combined prepared source at most 60,000. An empty prepared-source string is valid and means the original source is used or summarized as needed.
 - OCR input is capped at 15 MiB and 30 million pixels per page.
-- At most 3 alternatives, with an AI JSON response capped at 100,000 characters and one corrective retry for invalid output. This backend retry is separate from frontend read retries; generation requests are never automatically retried by the frontend.
+- Lesson and session-tool AI JSON responses are capped at 100,000 characters, with one corrective retry for invalid output. That backend retry is separate from frontend read retries; generation and session-tool requests are never automatically retried by the frontend.
+- Session tools (`worksheet`, `quiz`, `game`) return ephemeral JSON only; no server persistence.
 - AI HTTP timeout is five minutes. OCR observes request cancellation between native page runs; inference already in progress finishes before its image is released.
 
 These are application-level defaults in code. If you change them, adjust proxy, provider timeout, memory, and abuse controls together. For public use, consider lower per-user quotas after adding authentication.

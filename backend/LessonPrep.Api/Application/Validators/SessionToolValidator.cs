@@ -8,6 +8,7 @@ namespace LessonPrep.Api.Application.Validators;
 public static class SessionToolValidator
 {
     private static readonly HashSet<string> ExerciseTypes = ["short", "multiple_choice", "true_false", "fill_blank"];
+    private static readonly HashSet<string> GameKinds = ["adventure", "matching", "race"];
 
     public static object Parse(string tool, string json)
     {
@@ -61,20 +62,34 @@ public static class SessionToolValidator
     {
         var game = JsonSerializer.Deserialize<GameDto>(json, JsonDefaults.Web)
                    ?? throw new LessonValidationException("The response was empty.");
-        if (string.IsNullOrWhiteSpace(game.Title) || game.Kind is not ("quiz" or "matching"))
+        if (string.IsNullOrWhiteSpace(game.Title) || !GameKinds.Contains(game.Kind))
             throw new LessonValidationException("the game title or kind is missing");
-        if (game.Kind == "quiz")
+        if (game.Kind == "adventure")
         {
-            var questions = game.Quiz?.Questions ?? [];
-            if (questions.Count is < 1 or > 16)
-                throw new LessonValidationException("the quiz needs questions");
-            foreach (var question in questions)
+            var stages = game.Adventure?.Stages ?? [];
+            if (stages.Count is < 1 or > 16)
+                throw new LessonValidationException("the adventure needs stages");
+            foreach (var stage in stages)
             {
-                if (question is null || string.IsNullOrWhiteSpace(question.Prompt)
-                    || question.Options is not { Count: >= 2 and <= 8 }
-                    || question.Options.Any(string.IsNullOrWhiteSpace)
-                    || question.CorrectIndex < 0 || question.CorrectIndex >= question.Options.Count)
-                    throw new LessonValidationException("each quiz question needs options and a correct answer");
+                if (stage is null || string.IsNullOrWhiteSpace(stage.Prompt)
+                    || stage.Options is not { Count: >= 2 and <= 8 }
+                    || stage.Options.Any(string.IsNullOrWhiteSpace)
+                    || stage.CorrectIndex < 0 || stage.CorrectIndex >= stage.Options.Count)
+                    throw new LessonValidationException("each adventure stage needs choices and a correct path");
+            }
+        }
+        else if (game.Kind == "race")
+        {
+            var rounds = game.Race?.Rounds ?? [];
+            if (rounds.Count is < 1 or > 16)
+                throw new LessonValidationException("the race needs rounds");
+            foreach (var round in rounds)
+            {
+                if (round is null || string.IsNullOrWhiteSpace(round.Prompt)
+                    || round.Options is not { Count: >= 2 and <= 8 }
+                    || round.Options.Any(string.IsNullOrWhiteSpace)
+                    || round.CorrectIndex < 0 || round.CorrectIndex >= round.Options.Count)
+                    throw new LessonValidationException("each race round needs options and a correct answer");
             }
         }
         else
@@ -90,14 +105,23 @@ public static class SessionToolValidator
         return game with
         {
             Title = game.Title.Trim(),
-            Quiz = new GameQuizDto((game.Quiz?.Questions ?? []).Select(question => question with
+            Hook = game.Hook?.Trim() ?? "",
+            Host = game.Host?.Trim() ?? "",
+            Adventure = new GameAdventureDto((game.Adventure?.Stages ?? []).Select(stage => stage with
             {
-                Prompt = question.Prompt.Trim(),
-                Options = question.Options.Select(option => option.Trim()).ToList(),
-                Explanation = question.Explanation?.Trim() ?? ""
+                Prompt = stage.Prompt.Trim(),
+                Options = stage.Options.Select(option => option.Trim()).ToList(),
+                Success = stage.Success?.Trim() ?? "",
+                Miss = stage.Miss?.Trim() ?? ""
             }).ToList()),
             Matching = new GameMatchingDto((game.Matching?.Pairs ?? []).Select(pair =>
-                pair with { Left = pair.Left.Trim(), Right = pair.Right.Trim() }).ToList())
+                pair with { Left = pair.Left.Trim(), Right = pair.Right.Trim() }).ToList()),
+            Race = new GameRaceDto((game.Race?.Rounds ?? []).Select(round => round with
+            {
+                Prompt = round.Prompt.Trim(),
+                Options = round.Options.Select(option => option.Trim()).ToList(),
+                Explanation = round.Explanation?.Trim() ?? ""
+            }).ToList())
         };
     }
 

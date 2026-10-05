@@ -3,6 +3,7 @@ using LessonPrep.Api.Application.Dtos;
 using LessonPrep.Api.Application.Enums;
 using LessonPrep.Api.Application.Exceptions;
 using LessonPrep.Api.Application.Validators;
+using LessonPrep.Api.Helpers;
 using LessonPrep.Api.Helpers.Prompts;
 using LessonPrep.Api.Helpers.Schemas;
 using LessonPrep.Api.Infrastructure.Security;
@@ -35,9 +36,12 @@ public sealed class SessionToolService(
         if (!models.Any(model => model.Id == request.Model))
             throw new LessonValidationException("The selected model is no longer available. Refresh your model list.");
         var schema = request.Tool == "game" ? SessionToolSchemas.Game : SessionToolSchemas.ExerciseSet;
+        var design = request.Tool == "game" ? GameDesignPresets.ForClass(request.Session.ClassName) : null;
         var source = SourceText(request.Snapshot);
         var user = SessionToolPrompt.User(request.Tool, request.Session, source, request.Snapshot.MaterialNote,
-            request.Snapshot.SourceLanguage);
+            request.Snapshot.SourceLanguage, design);
+        var system = request.Tool == "game" ? SessionToolPrompt.GameSystem : SessionToolPrompt.System;
+        var maxTokens = request.Tool == "game" ? 4000 : 2500;
         string? feedback = null;
         for (var attempt = 0; attempt < 2; attempt++)
         {
@@ -46,9 +50,12 @@ public sealed class SessionToolService(
                 : $"{user}\nCORRECTION REQUIRED: The previous response failed validation: {feedback}. Return complete corrected JSON.";
             try
             {
-                var json = await provider.GenerateJsonAsync(apiKey, request.Model, SessionToolPrompt.System, prompt,
-                    schema, 2500, cancellationToken);
-                return SessionToolValidator.Parse(request.Tool, json);
+                var json = await provider.GenerateJsonAsync(apiKey, request.Model, system, prompt,
+                    schema, maxTokens, cancellationToken);
+                var parsed = SessionToolValidator.Parse(request.Tool, json);
+                return parsed is GameDto game && design is not null
+                    ? game with { PresetId = design.Id, Band = design.Band }
+                    : parsed;
             }
             catch (LessonValidationException exception) when (attempt == 0)
             {

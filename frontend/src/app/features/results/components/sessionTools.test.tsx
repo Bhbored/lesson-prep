@@ -2,11 +2,11 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
 import { ExerciseSetView } from "./ExerciseSetView";
-import { GamePanel } from "./GamePanel";
 import { SessionCard } from "./SessionCard";
+import { SessionToolSheet } from "./SessionToolSheet";
 import { translations } from "@/app/shared/i18n/messages";
 import { lesson } from "@/test/fixtures";
-import type { ExerciseSet, Game } from "@/app/shared/schemas/domain";
+import type { ExerciseSet } from "@/app/shared/schemas/domain";
 
 const t = translations("en");
 const set: ExerciseSet = {
@@ -22,36 +22,34 @@ const set: ExerciseSet = {
     },
   ],
 };
-const game: Game = {
-  title: "Leaf match",
-  kind: "matching",
-  quiz: { questions: [] },
-  matching: { pairs: [{ left: "Sun", right: "Energy" }] },
+
+const tools = {
+  open: true,
+  loading: "" as const,
+  tool: "worksheet" as const,
+  exercise: set,
+  game: null,
+  failed: "",
+  generate: vi.fn(),
+  preview: vi.fn(),
+  save: vi.fn(),
+  close: vi.fn(),
+  retry: vi.fn(),
 };
 
 vi.mock("../hooks/useSessionTools", () => ({
   useSessionTools: () => ({
+    open: false,
     loading: "",
-    tool: "worksheet",
-    exercise: {
-      title: "Leaf worksheet",
-      instructions: "Work quietly.",
-      items: [
-        {
-          prompt: "What do plants need?",
-          type: "short",
-          options: [],
-          answer: "Sunlight",
-          explanation: "They convert light.",
-        },
-      ],
-    },
+    tool: "",
+    exercise: null,
     game: null,
     failed: "",
-    exporting: false,
     generate: vi.fn(),
-    exportExercise: vi.fn(),
-    exportGame: vi.fn(),
+    preview: vi.fn(),
+    save: vi.fn(),
+    close: vi.fn(),
+    retry: vi.fn(),
   }),
 }));
 
@@ -70,14 +68,15 @@ it("renders worksheet items and toggles the answer key", async () => {
   expect(screen.queryByText(t.answerKey)).not.toBeInTheDocument();
 });
 
-it("previews a game and offers a download action", async () => {
+it("shows a shared sheet with live preview and save", async () => {
   const user = userEvent.setup();
-  const onDownload = vi.fn();
-  render(<GamePanel game={game} t={t} onDownload={onDownload} />);
-  expect(screen.getByText("Leaf match")).toBeInTheDocument();
-  expect(screen.getByText(/Sun/)).toBeInTheDocument();
-  await user.click(screen.getByRole("button", { name: t.downloadGame }));
-  expect(onDownload).toHaveBeenCalledOnce();
+  render(<SessionToolSheet tools={tools} t={t} />);
+  expect(screen.getByRole("dialog", { name: "Leaf worksheet" })).toBeInTheDocument();
+  expect(screen.getByText(t.toolReady)).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: t.previewLive }));
+  await user.click(screen.getByRole("button", { name: t.saveActivity }));
+  expect(tools.preview).toHaveBeenCalledOnce();
+  expect(tools.save).toHaveBeenCalledOnce();
 });
 
 it("shows session tool icons next to the download control", () => {
@@ -106,6 +105,8 @@ it("shows session tool icons next to the download control", () => {
     "title",
     t.game,
   );
-  expect(screen.getByRole("button", { name: `${t.exportPdf}: Session 1 of 2` })).toBeInTheDocument();
-  expect(screen.getByText("Leaf worksheet")).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: `${t.exportPdf}: Session 1 of 2` }),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });

@@ -5,10 +5,10 @@ Start here if you are new to the repository. The root [README](../README.md) is 
 ## Guides
 
 - [Architecture and request flow](architecture/overview.md) — components, responsibilities, and how a lesson request travels through the system.
-- [Frontend architecture](architecture/frontend.md) — routes, providers, query caches, reusable utilities, validation, and printing.
-- [API contract](architecture/api-contract.md) — endpoint payloads, JSON serialization, error responses, and streaming events.
+- [Frontend architecture](architecture/frontend.md) — routes, providers, query caches, results/session tools, validation, and printing.
+- [API contract](architecture/api-contract.md) — endpoint payloads, JSON serialization, error responses, streaming events, and session tools.
 - [Document extraction and OCR](architecture/documents-and-ocr.md) — PDF/TXT/CSV handling and where PaddleOCR runs.
-- [AI providers and streaming](architecture/providers-and-streaming.md) — model discovery, shared schema, validation, and SSE.
+- [AI providers and streaming](architecture/providers-and-streaming.md) — model discovery, shared schema, multi-session validation, `GenerateJsonAsync`, and SSE.
 - [Local development](development/local-setup.md) — tools, commands, configuration, and useful checks.
 - [Hosting and deployment](deployment/hosting.md) — Render API container from GitHub, HTTPS/proxy trust, and deployment checks.
 - [Frontend on Cloudflare Pages](deployment/frontend-cloudflare.md) — Wrangler deploy, `VITE_API_URL`, and CORS with Render.
